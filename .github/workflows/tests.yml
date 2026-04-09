@@ -21,7 +21,7 @@ jobs:
 
       - name: Run tests with pytest
         env:
-          PYTHONPATH: src
+          PYTHONPATH: .
           MANIFEST_PATH: manifest.json
           TMP_DIR: tmp
 
