@@ -1,12 +1,12 @@
-from src.config import Config
+from src.config import Config, settings
 from src.s3_manager import S3CatalogManager
 from src.csv_downloader import CSVDownloader
 from src.file_utils import tmp_local_dir
 
-def main():
-    with tmp_local_dir(Config.TMP_DIR) as tmp_dir:
-        s3_manager = S3CatalogManager(Config.S3_BUCKET, Config.MANIFEST_PATH, tmp_dir)
-        downloader = CSVDownloader(Config.RESOURCES, tmp_dir)
+def main(config: Config):
+    with tmp_local_dir(config.TMP_DIR) as tmp_dir:
+        s3_manager = S3CatalogManager(config.S3_BUCKET, config.MANIFEST_PATH, config.TMP_DIR)
+        downloader = CSVDownloader(config.RESOURCES, config.TMP_DIR)
 
         downloads = downloader.fetch_data()
 
@@ -22,4 +22,4 @@ def main():
         s3_manager.upload_manifest()
 
 if __name__ == "__main__":
-    main()
+    main(settings)
