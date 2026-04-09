@@ -4,14 +4,28 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    def __init__(self):
-        self.S3_BUCKET: str = os.getenv("S3_BUCKET_NAME")
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super().__new__(cls, *args, **kwargs)
+            cls._instance._init_env()
+        return cls._instance
+
+    def _init_env(self):
+        self.S3_BUCKET: str = self._get_required_env("S3_BUCKET_NAME")
         self.MANIFEST_PATH: str = os.getenv("MANIFEST_PATH", "manifest.json")
         self.TMP_DIR: str = os.getenv("TMP_DIR", "tmp")
 
         self.RESOURCES: dict[str, str] = {
-        "parts": os.getenv("REBRICKABLE_PARTS_CSV_URL"),
-        "categories": os.getenv("REBRICKABLE_CATEGORIES_CSV_URL"),
-    }
+            "parts": self._get_required_env("REBRICKABLE_PARTS_CSV_URL"),
+            "categories": self._get_required_env("REBRICKABLE_CATEGORIES_CSV_URL"),
+        }
+
+    def _get_required_env(self, key: str) -> str:
+        value = os.getenv(key)
+        if not value:
+            raise ValueError(f"Environment variable {key} is not set or empty")
+        return value
 
 settings = Config()
