@@ -22,6 +22,8 @@ class Config:
             "categories": self._get_required_env("REBRICKABLE_CATEGORIES_CSV_URL"),
         }
 
+        self.LDRAW_URL = self._get_required_env("LDRAW_COMPLETE_LIBRARY_URL")
+
     def _get_required_env(self, key: str) -> str:
         value = os.getenv(key)
         if not value:

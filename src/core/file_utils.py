@@ -32,7 +32,7 @@ def create_filename_with_timestamp(filename: str) -> str:
     :return: The filename with a timestamp
     """
     basename, extension = split_filename(filename)
-    date = datetime.now().strftime("%Y%m%d%H%M%S")
+    date = return_timestamp()
     return f"{basename}_{date}{extension}"
 
 def split_filename(filename: str) -> tuple[str, str]:
@@ -82,3 +82,6 @@ def tmp_local_dir(tmp_dir: str, cleanup: bool = True):
                 shutil.rmtree(tmp_dir)
         else:
             print(f"Skipping {os.path.abspath(tmp_dir)} cleanup")
+
+def return_timestamp() -> str:
+    return datetime.now().strftime("%Y%m%d%H%M%S")
