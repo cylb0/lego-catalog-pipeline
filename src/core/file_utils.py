@@ -66,7 +66,7 @@ def hash_file(file_path: str) -> str:
     return file_hash
 
 @contextmanager
-def tmp_local_dir(tmp_dir: str):
+def tmp_local_dir(tmp_dir: str, cleanup: bool = True):
     """
     Create a temporary local directory for the pipeline
 
@@ -77,5 +77,8 @@ def tmp_local_dir(tmp_dir: str):
     try:
         yield tmp_dir
     finally:
-        if os.path.exists(tmp_dir):
-            shutil.rmtree(tmp_dir)
+        if cleanup:
+            if os.path.exists(tmp_dir):
+                shutil.rmtree(tmp_dir)
+        else:
+            print(f"Skipping {os.path.abspath(tmp_dir)} cleanup")
