@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
 import pytest
-from src.csv_downloader import CSVDownloader
+from src.ingestion.csv_downloader import CSVDownloader
 from urllib.error import HTTPError, URLError
 
 @pytest.fixture
@@ -16,14 +16,14 @@ class TestDownloadFileDecorator:
     URL = "https://example.com/data.csv"
     PATH = "/tmp/data.csv"
 
-    @patch("src.csv_downloader.urlretrieve")
+    @patch("src.ingestion.csv_downloader.urlretrieve")
     def test_download_file_success(self, mock_urlretrieve, downloader):
         result = downloader.download_file(self.URL, self.PATH)
 
         mock_urlretrieve.assert_called_once_with(self.URL, self.PATH)
         assert result == self.PATH
 
-    @patch("src.csv_downloader.urlretrieve")
+    @patch("src.ingestion.csv_downloader.urlretrieve")
     def test_download_file_network_error(self, mock_urlretrieve, downloader):
         mock_urlretrieve.side_effect = HTTPError("Error", 404, "Not Found", {}, None)
 
@@ -31,7 +31,7 @@ class TestDownloadFileDecorator:
 
         assert result is None
 
-    @patch("src.csv_downloader.urlretrieve")
+    @patch("src.ingestion.csv_downloader.urlretrieve")
     def test_download_file_url_error(self, mock_urlretrieve, downloader):
         mock_urlretrieve.side_effect = URLError("Error")
 
@@ -39,7 +39,7 @@ class TestDownloadFileDecorator:
 
         assert result is None
 
-    @patch("src.csv_downloader.urlretrieve")
+    @patch("src.ingestion.csv_downloader.urlretrieve")
     def test_download_file_os_error(self, mock_urlretrieve, downloader):
         mock_urlretrieve.side_effect = OSError()
 
@@ -47,7 +47,7 @@ class TestDownloadFileDecorator:
         
         assert result is None
 
-    @patch("src.csv_downloader.urlretrieve")
+    @patch("src.ingestion.csv_downloader.urlretrieve")
     def test_download_file_exception(self, mock_urlretrieve, downloader):
         mock_urlretrieve.side_effect = Exception()
 
@@ -56,8 +56,8 @@ class TestDownloadFileDecorator:
         assert result is None
         
 class TestFetchResource:
-    @patch("src.csv_downloader.create_filename_with_timestamp")
-    @patch("src.csv_downloader.join_path")
+    @patch("src.ingestion.csv_downloader.create_filename_with_timestamp")
+    @patch("src.ingestion.csv_downloader.join_path")
     def test_fetch_resources_calls_download_file_with_correct_path_success(self, mock_join_path, mock_filename, downloader):
         local_path = "/tmp/test.csv"
         mock_filename.return_value = "test.csv"

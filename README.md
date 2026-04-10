@@ -74,14 +74,19 @@ python main.py
 lego-catalog-pipeline/
 ├── src/
 │   ├── __init__.py
-│   ├── config.py        # Configuration management
-│   ├── csv_downloader.py  # CSV downloading logic
-│   ├── file_utils.py      # File utility functions
-│   └── s3_manager.py      # S3 interaction logic
-├── main.py              # Pipeline entry point
-├── requirements.txt     # Project dependencies
-├── .env                 # Environment variables (not version controlled)
-└── README.md            # Project documentation
+│   ├── core/
+│   │   ├── config.py         # Configuration management
+│   │   └── file_utils.py     # File utility functions
+│   ├── ingestion/
+│   │   └── csv_downloader.py # CSV downloading logic
+│   └── storage/
+│   │   └── s3_manager.py     # S3 interaction logic
+├── tests/                    # Unit testing suite
+├── main.py                   # Pipeline entry point
+├── pytest.ini                # Pytest configuration
+├── requirements.txt          # Project dependencies
+├── .env                      # Environment variables (not version controlled)
+└── README.md                 # Project documentation
 ```
 
 ## Testing

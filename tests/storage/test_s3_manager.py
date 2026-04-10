@@ -1,4 +1,4 @@
-from src.s3_manager import S3CatalogManager
+from src.storage.s3_manager import S3CatalogManager
 import boto3
 from botocore.exceptions import ClientError
 import json
