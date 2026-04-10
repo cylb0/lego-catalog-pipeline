@@ -17,10 +17,10 @@ def sync_resource(resource: str, data: dict, s3_manager: S3CatalogManager):
             s3_manager.remove_from_s3(old_filename)
         s3_manager.update_manifest_resource(resource, data["filename"], data["hash"])
 
-def sync_ldraw(local_ldraw: str, s3_manager: S3CatalogManager):
-    s3_key = "complete.zip"
+def sync_ldraw(local_ldraw: str, remote_date: str, s3_manager: S3CatalogManager):
+    s3_key = "ldraw.zip"
     s3_manager.upload_to_s3(local_ldraw, s3_key)
-    s3_manager.update_manifest_ldraw(s3_key)
+    s3_manager.update_manifest_ldraw(s3_key, remote_date)
         
 def main(config: Config):
     with tmp_local_dir(config.TMP_DIR) as tmp_dir:
@@ -34,9 +34,14 @@ def main(config: Config):
             sync_resource(resource, data, s3_manager)
 
         latest_ldraw_date = ldraw_manager.get_latest_version_date()
+        current_manifest_date = s3_manager.manifest.data.get("ingestion", {}).get("ldraw", {}).get("last_modified")
 
-        local_ldraw = ldraw_manager.fetch_library()
-        sync_ldraw(local_ldraw, s3_manager)
+        if latest_ldraw_date == current_manifest_date:
+            print("LDraw library is up to date, skipping upload")
+        else:
+            print("New LDraw library detected, downloading and uploading to S3")
+            local_ldraw = ldraw_manager.fetch_library()
+            sync_ldraw(local_ldraw, latest_ldraw_date, s3_manager)
 
         print("final manifest", json.dumps(s3_manager.manifest.data, indent=4))
         s3_manager.upload_manifest()
