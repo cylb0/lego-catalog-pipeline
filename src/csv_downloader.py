@@ -2,6 +2,7 @@ from functools import wraps
 from urllib.request import urlretrieve
 from urllib.error import HTTPError, URLError
 from src.file_utils import create_local_path, get_filename, create_filename_with_timestamp, hash_file
+import os
 
 class CSVDownloader:
     def __init__(self, resources: dict[str, str], tmp_dir: str):
@@ -50,8 +51,9 @@ class CSVDownloader:
             print(f"Resource {resource} not found")
             return None
 
-        filename = create_filename_with_timestamp(resource)
-        local_path = create_local_path(self.tmp_dir, filename)
+        original_filename = os.path.basename(url)
+        timestamped_filename = create_filename_with_timestamp(original_filename)
+        local_path = create_local_path(self.tmp_dir, timestamped_filename)
 
         return self.download_file(url, local_path)
 

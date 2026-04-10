@@ -23,19 +23,34 @@ def get_filename(path: str) -> str:
     """
     return os.path.basename(path)
 
-def create_filename_with_timestamp(basename: str) -> str:
+def create_filename_with_timestamp(filename: str) -> str:
     """
-    Create a filename with a timestamp
+    Injects a timestamp into the filename
 
-    :param basename: The basename of the file
+    :param filename: The filename to inject a timestamp into
     :return: The filename with a timestamp
     """
+    basename, extension = split_filename(filename)
     date = datetime.now().strftime("%Y%m%d%H%M%S")
-    return f"{basename}_{date}.csv.gz"
+    return f"{basename}_{date}{extension}"
+
+def split_filename(filename: str) -> tuple[str, str]:
+    """
+    Split a filename into its base name and extension if it exists
+
+    :param filename: The filename to split
+    :return: A tuple of (basename, extension)
+    """
+    if "." in filename:
+        basename, extension = filename.split(".", 1)
+        extension = f".{extension}"
+    else:
+        basename, extension = filename, ""
+    return basename, extension
 
 def hash_file(file_path: str) -> str:
     """
-    Hash a file using SHA256, for performance reasons, it reads the file in 4MB chunks in binary mode
+    Hash a file using SHA256, for performance reasons, it reads the file in 4KB chunks in binary mode
 
     :param file_path: The path to the file to hash
     :return: The SHA256 hash of the file
