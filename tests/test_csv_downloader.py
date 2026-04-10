@@ -54,3 +54,21 @@ class TestDownloadFileDecorator:
         result = downloader.download_file(self.URL, self.PATH)
         
         assert result is None
+        
+class TestFetchResource:
+    @patch("src.csv_downloader.create_filename_with_timestamp")
+    @patch("src.csv_downloader.create_local_path")
+    def test_fetch_resources_calls_download_file_with_correct_path_success(self, mock_local_path, mock_filename, downloader):
+        local_path = "/tmp/test.csv"
+        mock_filename.return_value = "test.csv"
+        mock_local_path.return_value = local_path
+
+        with patch.object(downloader, "download_file", return_value=local_path) as mock_download_file:
+            result = downloader.fetch_resource("parts")
+            assert result == local_path
+            mock_download_file.assert_called_once_with(downloader.resources["parts"], local_path)
+
+    def test_fetch_resources_call_with_non_existent_resource_fails(self, downloader):
+        result = downloader.fetch_resource("non_existent")
+
+        assert result is None
