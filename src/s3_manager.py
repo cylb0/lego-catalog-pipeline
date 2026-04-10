@@ -43,38 +43,39 @@ class S3CatalogManager:
             print(f"Unexpected error fetching manifest: {e}")
             return {}
 
-    def upload_to_s3(self, path: str, filename: str) -> bool:
+    def upload_to_s3(self, path: str, s3_key: str) -> bool:
         """
         Upload a file to S3
 
         :param path: The path to the file to upload
-        :param filename: The name of the file to upload
+        :param s3_key: The S3 key of the file to upload
         :return: True if the file was uploaded successfully, False otherwise
         """
         try:
-            self.client.upload_file(path, self.bucket, filename)
-            print(f"Uploaded {path} to s3://{self.bucket}/{filename}")
+            self.client.upload_file(path, self.bucket, s3_key)
+            print(f"Uploaded {path} to s3://{self.bucket}/{s3_key}")
             return True
+        except FileNotFoundError as e:
+            print(f"Local file not found: {path}")
+            return False
         except ClientError as e:
             print(f"S3 error uploading file: {e}")
             return False
 
-    def remove_from_s3(self, filename: str) -> bool:
+    def remove_from_s3(self, s3_key: str) -> bool:
         """
         Remove a file from S3
 
-        :param filename: The filename to remove
+        :param s3_key: The S3 key of the file to remove
         :return: True if the file was removed successfully, False otherwise
         """
-        if filename in self.manifest and "filename" in self.manifest[filename]:
-            filename = self.manifest[resource]["filename"]
-            try:
-                self.client.delete_object(self.bucket, filename)
-                print(f"Removed {filename} from s3://{self.bucket}")
-                return True
-            except ClientError as e:
-                print(f"S3 error removing file: {e}")
-                return False
+        try:
+            self.client.delete_object(Bucket=self.bucket, Key=s3_key)
+            print(f"Removed {s3_key} from s3://{self.bucket}")
+            return True
+        except ClientError as e:
+            print(f"S3 error removing file: {e}")
+            return False
 
     def check_for_changes(self, resource: str, hash: str) -> bool:
         """
@@ -99,11 +100,10 @@ class S3CatalogManager:
         try:
             with open(self.local_manifest_path, 'w') as f:
                 json.dump(self.manifest, f)
-            self.upload_to_s3(self.local_manifest_path, self.manifest_key)
             self.manifest_changed = True
             return True
-        except (IOError, ClientError) as e:
-            print(f"Error updating manifest: {e}")
+        except IOError as e:
+            print(f"Error updating manifest locally: {e}")
             return False
 
     def upload_manifest(self) -> bool:
