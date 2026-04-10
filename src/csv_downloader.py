@@ -44,9 +44,14 @@ class CSVDownloader:
         :param resource: The name of the resource (e.g., "parts")
         :return: The path to the downloaded file or None if the download failed
         """
+        url = self.resources.get(resource)
+
+        if not url:
+            print(f"Resource {resource} not found")
+            return None
+
         filename = create_filename_with_timestamp(resource)
         local_path = create_local_path(self.tmp_dir, filename)
-        url = self.resources[resource]
 
         return self.download_file(url, local_path)
 
