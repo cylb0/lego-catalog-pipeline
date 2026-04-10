@@ -45,6 +45,21 @@ class S3CatalogManager:
             print(f"Unexpected error fetching manifest: {e}")
             return {}
 
+    def _save_local_manifest(self) -> bool:
+        """
+        Save the manifest to a local file
+
+        :return: True if the manifest was saved successfully, False otherwise
+        """
+        try:
+            with open(self.local_manifest_path, 'w') as f:
+                json.dump(self.manifest.data, f)
+            self.manifest.changed = True
+            return True
+        except IOError as e:
+            print(f"Error updating manifest locally: {e}")
+            return False
+    
     def upload_to_s3(self, path: str, s3_key: str) -> bool:
         """
         Upload a file to S3
@@ -99,14 +114,7 @@ class S3CatalogManager:
         :return: True if the manifest was updated successfully, False otherwise
         """
         self.manifest.update_csv_resource(resource, filename, hash)
-        try:
-            with open(self.local_manifest_path, 'w') as f:
-                json.dump(self.manifest.data, f)
-            self.manifest.changed = True
-            return True
-        except IOError as e:
-            print(f"Error updating manifest locally: {e}")
-            return False
+        return self._save_local_manifest()
 
     def update_manifest_ldraw(self, filename: str) -> bool:
         """
@@ -115,20 +123,8 @@ class S3CatalogManager:
         :param filename: The name of the file to update
         :return: True if the manifest was updated successfully, False otherwise
         """
-        ingestion = self.manifest.data.setdefault("ingestion", {})
-        ldraw = ingestion.setdefault("ldraw", {})
-
-        ldraw["filename"] = filename
-        ldraw["version"] = return_timestamp()
-
-        try:
-            with open(self.local_manifest_path, 'w') as f:
-                json.dump(self.manifest.data, f)
-            self.manifest.changed = True
-            return True
-        except IOError as e:
-            print(f"Error updating manifest locally: {e}")
-            return False
+        self.manifest.update_ldraw(filename, return_timestamp())
+        return self._save_local_manifest()
 
     def upload_manifest(self) -> bool:
         """
