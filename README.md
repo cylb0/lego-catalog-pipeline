@@ -76,9 +76,10 @@ lego-catalog-pipeline/
 │   ├── __init__.py
 │   ├── core/
 │   │   ├── config.py         # Configuration management
-│   │   └── file_utils.py     # File utility functions
+│   │   ├── file_utils.py     # File utility functions
+│   │   └── network_utils.py  # Network utility functions
 │   ├── ingestion/
-│   │   └── csv_downloader.py # CSV downloading logic
+│   │   ├── csv_downloader.py # CSV downloading logic
 │   └── storage/
 │   │   └── s3_manager.py     # S3 interaction logic
 ├── tests/                    # Unit testing suite
