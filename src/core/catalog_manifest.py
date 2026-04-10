@@ -12,3 +12,10 @@ class CatalogManifest:
         csv_resources = ingestion.setdefault("csv_resources", {})
         csv_resources[resource] = {"filename": new_filename, "hash": new_hash}
         self.changed = True
+
+    def update_ldraw(self, filename: str, version: str) -> bool:
+        ingestion = self.data.setdefault("ingestion", {})
+        ldraw = ingestion.setdefault("ldraw", {})
+        ldraw["filename"] = filename
+        ldraw["version"] = version
+        self.changed = True
