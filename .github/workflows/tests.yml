@@ -19,6 +19,13 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pytest
 
+      - name: Create and serve mock ldraw library
+        run: |
+          mkdir -p mock_assets
+          python -c "import zipfile; zipfile.ZipFile('mock_assets/complete.zip', 'w').close()"
+          python -m http.server 8000 --directory mock_assets &
+          sleep 2
+
       - name: Run tests with pytest
         env:
           PYTHONPATH: .
@@ -33,4 +40,6 @@ jobs:
           REBRICKABLE_PARTS_CSV_URL: ${{ secrets.REBRICKABLE_PARTS_CSV_URL }}
           REBRICKABLE_CATEGORIES_CSV_URL: ${{ secrets.REBRICKABLE_CATEGORIES_CSV_URL }}
           REBRICKABLE_COLORS_CSV_URL: ${{ secrets.REBRICKABLE_COLORS_CSV_URL }}
+
+          LDRAW_COMPLETE_LIBRARY_URL: "http://localhost:8000/complete.zip"
         run: pytest
