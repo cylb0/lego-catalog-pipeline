@@ -1,4 +1,4 @@
-from src.file_utils import split_filename, create_filename_with_timestamp, hash_file, tmp_local_dir
+from src.core.file_utils import split_filename, create_filename_with_timestamp, hash_file, tmp_local_dir
 from unittest.mock import patch
 from datetime import datetime
 import hashlib
@@ -29,7 +29,7 @@ class TestSplitFilename:
 class TestCreateFileNameWithTimeStamp:
     time = datetime(2026, 4, 10, 11, 40, 55)
 
-    @patch("src.file_utils.datetime")
+    @patch("src.core.file_utils.datetime")
     def test_create_filename_with_timestamp_returns_filename_with_timestamp_and_extension(self, mock_datetime):
         mock_datetime.now.return_value = self.time
         
@@ -37,7 +37,7 @@ class TestCreateFileNameWithTimeStamp:
         
         assert filename == "parts_20260410114055.csv"
 
-    @patch("src.file_utils.datetime")
+    @patch("src.core.file_utils.datetime")
     def test_create_filename_with_timestamp_returns_filename_with_timestamp_no_extension(self, mock_datetime):
         mock_datetime.now.return_value = self.time
 

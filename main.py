@@ -1,7 +1,7 @@
-from src.config import Config, settings
-from src.s3_manager import S3CatalogManager
-from src.csv_downloader import CSVDownloader
-from src.file_utils import tmp_local_dir
+from src.core.config import Config, settings
+from src.storage.s3_manager import S3CatalogManager
+from src.ingestion.csv_downloader import CSVDownloader
+from src.core.file_utils import tmp_local_dir
 
 def sync_resource(resource: str, data: dict, s3_manager: S3CatalogManager):
     if not s3_manager.check_for_changes(resource, data["hash"]):
