@@ -116,14 +116,15 @@ class S3CatalogManager:
         self.manifest.update_csv_resource(resource, filename, hash)
         return self._save_local_manifest()
 
-    def update_manifest_ldraw(self, filename: str) -> bool:
+    def update_manifest_ldraw(self, filename: str, remote_date: str) -> bool:
         """
         Update the manifest with the new LDraw library
 
         :param filename: The name of the file to update
+        :param remote_date: The last modified date of the remote file
         :return: True if the manifest was updated successfully, False otherwise
         """
-        self.manifest.update_ldraw(filename, return_timestamp())
+        self.manifest.update_ldraw(filename, remote_date)
         return self._save_local_manifest()
 
     def upload_manifest(self) -> bool:

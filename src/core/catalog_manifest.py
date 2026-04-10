@@ -13,9 +13,9 @@ class CatalogManifest:
         csv_resources[resource] = {"filename": new_filename, "hash": new_hash}
         self.changed = True
 
-    def update_ldraw(self, filename: str, version: str) -> bool:
+    def update_ldraw(self, filename: str, last_modified: str) -> bool:
         ingestion = self.data.setdefault("ingestion", {})
         ldraw = ingestion.setdefault("ldraw", {})
         ldraw["filename"] = filename
-        ldraw["version"] = version
+        ldraw["last_modified"] = last_modified
         self.changed = True
