@@ -2,6 +2,8 @@ import boto3
 from botocore.exceptions import ClientError
 import os
 import json
+from src.core.file_utils import return_timestamp
+from src.core.catalog_manifest import CatalogManifest
 
 class S3CatalogManager:
     def __init__(self, bucket: str, manifest_key: str, tmp_dir: str):
@@ -17,8 +19,8 @@ class S3CatalogManager:
         self.manifest_key: str = manifest_key
         self.tmp_dir: str = tmp_dir
         self.local_manifest_path: str = os.path.join(tmp_dir, manifest_key)
-        self.manifest: dict[str, dict[str, str]] = self._fetch_manifest()
-        self.manifest_changed: bool = False
+        raw_manifest = self._fetch_manifest()
+        self.manifest = CatalogManifest(raw_manifest)
 
     def _fetch_manifest(self):
         """
@@ -77,7 +79,7 @@ class S3CatalogManager:
             print(f"S3 error removing file: {e}")
             return False
 
-    def check_for_changes(self, resource: str, hash: str) -> bool:
+    def check_for_resource_changes(self, resource: str, hash: str) -> bool:
         """
         Check for differences between manifest and new resource
 
@@ -85,9 +87,9 @@ class S3CatalogManager:
         :param hash: The hash of the new resource
         :return: True if the resource has changed, False otherwise
         """
-        return self.manifest.get(resource, {}).get("hash") != hash
+        return self.manifest.check_csv_change(resource, hash)
 
-    def update_manifest(self, resource: str, filename: str, hash: str) -> bool:
+    def update_manifest_resource(self, resource: str, filename: str, hash: str) -> bool:
         """
         Update the manifest with the new resource
 
@@ -96,11 +98,33 @@ class S3CatalogManager:
         :param hash: The hash of the file
         :return: True if the manifest was updated successfully, False otherwise
         """
-        self.manifest[resource] = {"filename": filename, "hash": hash}
+        self.manifest.update_csv_resource(resource, filename, hash)
         try:
             with open(self.local_manifest_path, 'w') as f:
-                json.dump(self.manifest, f)
-            self.manifest_changed = True
+                json.dump(self.manifest.data, f)
+            self.manifest.changed = True
+            return True
+        except IOError as e:
+            print(f"Error updating manifest locally: {e}")
+            return False
+
+    def update_manifest_ldraw(self, filename: str) -> bool:
+        """
+        Update the manifest with the new LDraw library
+
+        :param filename: The name of the file to update
+        :return: True if the manifest was updated successfully, False otherwise
+        """
+        ingestion = self.manifest.data.setdefault("ingestion", {})
+        ldraw = ingestion.setdefault("ldraw", {})
+
+        ldraw["filename"] = filename
+        ldraw["version"] = return_timestamp()
+
+        try:
+            with open(self.local_manifest_path, 'w') as f:
+                json.dump(self.manifest.data, f)
+            self.manifest.changed = True
             return True
         except IOError as e:
             print(f"Error updating manifest locally: {e}")
@@ -112,7 +136,7 @@ class S3CatalogManager:
 
         :return: True if the manifest was uploaded successfully or if there were no changes, False otherwise
         """
-        if not self.manifest_changed:
+        if not self.manifest.changed:
             print(f"No changes detected in manifest, skipping upload")
             return True
 
@@ -120,6 +144,6 @@ class S3CatalogManager:
         success = self.upload_to_s3(self.local_manifest_path, self.manifest_key)
         
         if success:
-            self.manifest_changed = False
+            self.manifest.changed = False
             
         return success

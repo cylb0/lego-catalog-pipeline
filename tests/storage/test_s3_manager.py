@@ -7,13 +7,17 @@ from unittest.mock import mock_open, MagicMock, patch
 import pytest
 
 MOCK_MANIFEST = {
-    "parts": {
-        "filename": "parts.csv.gz",
-    "hash": "parts_hash"
-    },
-    "categories": {
-        "filename": "categories.csv.gz",
-        "hash": "categories_hash"
+    "ingestion": {
+        "csv_resources": {
+            "parts": {
+                "filename": "parts.csv.gz",
+                "hash": "parts_hash"
+            },
+            "categories": {
+                "filename": "categories.csv.gz",
+                "hash": "categories_hash"
+            }
+        }
     }
 }
 
@@ -41,7 +45,7 @@ def manager(monkeypatch, mock_s3_client_working):
 
 class TestFetchManifestLogic:
     def test_fetch_manifest_success(self, manager):
-        assert manager.manifest == MOCK_MANIFEST
+        assert manager.manifest.data == MOCK_MANIFEST
 
     def test_fetch_manifest_returns_empty_dict_when_client_error(self, monkeypatch):
         class MockS3Client:
@@ -50,32 +54,32 @@ class TestFetchManifestLogic:
         monkeypatch.setattr(boto3, "client", lambda _: MockS3Client())
 
         manager = S3CatalogManager("test-bucket", "test-manifest.json", "test-tmp")
-        assert manager.manifest == {}
+        assert manager.manifest.data == {}
 
     def test_fetch_manifest_returns_empty_dict_when_corrupted_file(self, monkeypatch, mock_s3_client_working):
         m = mock_open(read_data="123_invalid_json")
         monkeypatch.setattr(builtins, "open", m)
 
         manager = S3CatalogManager("test-bucket", "test-manifest.json", "test-tmp")
-        assert manager.manifest == {}
+        assert manager.manifest.data == {}
 
-class TestCheckForChangesLogic:
+class TestCheckForResourceChangesLogic:
     EXISTING_RESOURCE = "parts"
-    EXISTING_HASH = MOCK_MANIFEST[EXISTING_RESOURCE]["hash"]
+    EXISTING_HASH = MOCK_MANIFEST["ingestion"]["csv_resources"][EXISTING_RESOURCE]["hash"]
     NEW_RESOURCE = "colors"
     NEW_HASH = "new_hash"
 
-    def test_check_for_changes_resource_changed(self, manager):
-        assert manager.check_for_changes(self.EXISTING_RESOURCE, self.NEW_HASH) == True
+    def test_check_for_resource_changes_resource_changed(self, manager):
+        assert manager.check_for_resource_changes(self.EXISTING_RESOURCE, self.NEW_HASH) == True
 
-    def test_check_for_changes_no_changes(self, manager):
-        assert manager.check_for_changes(self.EXISTING_RESOURCE, self.EXISTING_HASH) == False
+    def test_check_for_resource_changes_no_changes(self, manager):
+        assert manager.check_for_resource_changes(self.EXISTING_RESOURCE, self.EXISTING_HASH) == False
 
-    def test_check_for_changes_new_resource(self, manager):
-        assert manager.check_for_changes(self.NEW_RESOURCE, self.NEW_HASH) == True
+    def test_check_for_resource_changes_new_resource(self, manager):
+        assert manager.check_for_resource_changes(self.NEW_RESOURCE, self.NEW_HASH) == True
 
-    def test_check_for_changes_hash_missing(self, monkeypatch, manager):
-        assert manager.check_for_changes(self.EXISTING_RESOURCE, None) == True
+    def test_check_for_resource_changes_hash_missing(self, monkeypatch, manager):
+        assert manager.check_for_resource_changes(self.EXISTING_RESOURCE, None) == True
 
 class TestUploadToS3Logic:
     def test_upload_to_s3_success(self, manager):
@@ -141,38 +145,38 @@ class TestRemoveFromS3Logic:
 
         manager.client.delete_object.assert_called_once_with(Bucket=manager.bucket, Key=S3_KEY)
 
-class TestUpdateManifestLogic:
+class TestUpdateManifestResourceLogic:
     EXISTING_RESOURCE = "parts"
     NEW_RESOURCE = "colors"
     NEW_FILENAME = "new_filename"
     NEW_HASH = "new_hash"
 
-    def test_update_manifest_updates_existing_resource_success(self, manager):
-        manager.update_manifest(self.EXISTING_RESOURCE, self.NEW_FILENAME, self.NEW_HASH)
+    def test_update_manifest_resource_updates_existing_resource_success(self, manager):
+        manager.update_manifest_resource(self.EXISTING_RESOURCE, self.NEW_FILENAME, self.NEW_HASH)
 
-        assert manager.manifest[self.EXISTING_RESOURCE] == {"filename": self.NEW_FILENAME, "hash": self.NEW_HASH}
-        assert manager.manifest_changed is True
+        assert manager.manifest.data["ingestion"]["csv_resources"][self.EXISTING_RESOURCE] == {"filename": self.NEW_FILENAME, "hash": self.NEW_HASH}
+        assert manager.manifest.changed is True
 
-    def test_update_manifest_adds_new_resource_success(self, manager):
-        manager.update_manifest(self.NEW_RESOURCE, self.NEW_FILENAME, self.NEW_HASH)
+    def test_update_manifest_resource_adds_new_resource_success(self, manager):
+        manager.update_manifest_resource(self.NEW_RESOURCE, self.NEW_FILENAME, self.NEW_HASH)
 
-        assert manager.manifest[self.NEW_RESOURCE] == {"filename": self.NEW_FILENAME, "hash": self.NEW_HASH}
-        assert manager.manifest_changed is True
+        assert manager.manifest.data["ingestion"]["csv_resources"][self.NEW_RESOURCE] == {"filename": self.NEW_FILENAME, "hash": self.NEW_HASH}
+        assert manager.manifest.changed is True
 
-    def test_update_manifest_io_error(self, monkeypatch, manager):
+    def test_update_manifest_resource_io_error(self, monkeypatch, manager):
         def mock_open_io_error(*args, **kwargs):
             raise IOError("Access denied")
         monkeypatch.setattr(builtins, "open", mock_open_io_error)
 
-        result = manager.update_manifest(self.EXISTING_RESOURCE, self.NEW_FILENAME, self.NEW_HASH)
+        result = manager.update_manifest_resource(self.EXISTING_RESOURCE, self.NEW_FILENAME, self.NEW_HASH)
 
         assert result is False
-        assert manager.manifest[self.EXISTING_RESOURCE] == {"filename": self.NEW_FILENAME, "hash": self.NEW_HASH}
-        assert manager.manifest_changed is False
+        assert manager.manifest.data["ingestion"]["csv_resources"][self.EXISTING_RESOURCE] == {"filename": self.NEW_FILENAME, "hash": self.NEW_HASH}
+        assert manager.manifest.changed is True
         
 class TestUploadManifestLogic:
     def test_upload_manifest_no_changes(self, manager):
-        manager.manifest_changed = False
+        manager.manifest.changed = False
         
         with patch.object(manager, "upload_to_s3") as mock_upload_to_s3:
             result = manager.upload_manifest()
@@ -181,7 +185,7 @@ class TestUploadManifestLogic:
             mock_upload_to_s3.assert_not_called()
 
     def test_upload_manifest_success(self, manager):
-        manager.manifest_changed = True
+        manager.manifest.changed = True
 
         with patch.object(manager, "upload_to_s3", return_value = True) as mock_upload_to_s3:
             result = manager.upload_manifest()
@@ -190,12 +194,12 @@ class TestUploadManifestLogic:
             mock_upload_to_s3.assert_called_once_with(manager.local_manifest_path, manager.manifest_key)
 
     def test_upload_manifest_client_error(self, manager):
-        manager.manifest_changed = True
+        manager.manifest.changed = True
 
         manager.upload_to_s3 = MagicMock(return_value=False)
 
         result = manager.upload_manifest()
 
         assert result is False
-        assert manager.manifest_changed is True
+        assert manager.manifest.changed is True
         manager.upload_to_s3.assert_called_once()
