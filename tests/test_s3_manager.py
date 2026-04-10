@@ -3,7 +3,7 @@ import boto3
 from botocore.exceptions import ClientError
 import json
 import builtins
-from unittest.mock import mock_open, MagicMock
+from unittest.mock import mock_open, MagicMock, patch
 import pytest
 
 MOCK_MANIFEST = {
@@ -171,8 +171,31 @@ class TestUpdateManifestLogic:
         assert manager.manifest_changed is False
         
 class TestUploadManifestLogic:
-    def test_upload_manifest_success(self):
-        pass
+    def test_upload_manifest_no_changes(self, manager):
+        manager.manifest_changed = False
+        
+        with patch.object(manager, "upload_to_s3") as mock_upload_to_s3:
+            result = manager.upload_manifest()
 
-    def test_upload_manifest_client_error(self):
-        pass
+            assert result is True
+            mock_upload_to_s3.assert_not_called()
+
+    def test_upload_manifest_success(self, manager):
+        manager.manifest_changed = True
+
+        with patch.object(manager, "upload_to_s3", return_value = True) as mock_upload_to_s3:
+            result = manager.upload_manifest()
+
+            assert result is True
+            mock_upload_to_s3.assert_called_once_with(manager.local_manifest_path, manager.manifest_key)
+
+    def test_upload_manifest_client_error(self, manager):
+        manager.manifest_changed = True
+
+        manager.upload_to_s3 = MagicMock(return_value=False)
+
+        result = manager.upload_manifest()
+
+        assert result is False
+        assert manager.manifest_changed is True
+        manager.upload_to_s3.assert_called_once()
