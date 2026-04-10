@@ -57,11 +57,11 @@ class TestDownloadFileDecorator:
         
 class TestFetchResource:
     @patch("src.csv_downloader.create_filename_with_timestamp")
-    @patch("src.csv_downloader.create_local_path")
-    def test_fetch_resources_calls_download_file_with_correct_path_success(self, mock_local_path, mock_filename, downloader):
+    @patch("src.csv_downloader.join_path")
+    def test_fetch_resources_calls_download_file_with_correct_path_success(self, mock_join_path, mock_filename, downloader):
         local_path = "/tmp/test.csv"
         mock_filename.return_value = "test.csv"
-        mock_local_path.return_value = local_path
+        mock_join_path.return_value = local_path
 
         with patch.object(downloader, "download_file", return_value=local_path) as mock_download_file:
             result = downloader.fetch_resource("parts")

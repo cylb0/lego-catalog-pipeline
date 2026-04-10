@@ -1,7 +1,7 @@
 from functools import wraps
 from urllib.request import urlretrieve
 from urllib.error import HTTPError, URLError
-from src.file_utils import create_local_path, get_filename, create_filename_with_timestamp, hash_file
+from src.file_utils import join_path, get_filename, create_filename_with_timestamp, hash_file
 import os
 
 class CSVDownloader:
@@ -53,7 +53,7 @@ class CSVDownloader:
 
         original_filename = os.path.basename(url)
         timestamped_filename = create_filename_with_timestamp(original_filename)
-        local_path = create_local_path(self.tmp_dir, timestamped_filename)
+        local_path = join_path(self.tmp_dir, timestamped_filename)
 
         return self.download_file(url, local_path)
 

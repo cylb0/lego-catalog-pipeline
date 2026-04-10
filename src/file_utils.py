@@ -4,13 +4,14 @@ import shutil
 from datetime import datetime
 import hashlib
 
-def create_local_path(path: str, filename: str) -> str:
+def join_path(path: str, filename: str) -> str:
     """
-    Create the local path for a filename
+    Join a path and a filename
+    Is essentially an alias for os.path.join
 
-    :param path: The path to create the local path for
-    :param filename: The filename to create the local path for
-    :return: The local path for the filename
+    :param path: The path to join
+    :param filename: The filename to join
+    :return: The joined path
     """
     return os.path.join(path, filename)
 
