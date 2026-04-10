@@ -1,7 +1,7 @@
 from functools import wraps
 from urllib.request import urlretrieve
 from urllib.error import HTTPError, URLError
-from src.file_utils import join_path, get_filename, create_filename_with_timestamp, hash_file
+from src.core.file_utils import join_path, get_filename, create_filename_with_timestamp, hash_file
 import os
 
 class CSVDownloader:
