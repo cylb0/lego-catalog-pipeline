@@ -37,7 +37,6 @@ class CSVDownloader:
             return None
         return wrapper
 
-    @handle_download_errors
     def fetch_resource(self, resource: str) -> str | None:
         """
         Fetches a single csv file from a given url
@@ -49,10 +48,21 @@ class CSVDownloader:
         local_path = create_local_path(self.tmp_dir, filename)
         url = self.resources[resource]
 
+        return self.download_file(url, local_path)
+
+    @handle_download_errors
+    def download_file(self, url: str, path: str) -> str:
+        """
+        Downloads a file from a given url to a given path
+
+        :param url: The url to download the file from
+        :param path: The path to download the file to
+        :return: The path to the downloaded file
+        """
         print(f"Downloading {url}...")
-        urlretrieve(url, local_path)
-        print(f"Downloaded in {local_path}")
-        return local_path
+        urlretrieve(url, path)
+        print(f"Downloaded in {path}")
+        return path
 
     def fetch_data(self) -> dict[str, dict[str, str]]:
         results = {}
