@@ -1,4 +1,4 @@
-from src.config import Config
+from src.core.config import Config
 import pytest
 
 def test_config_fails_if_bucket_not_set(monkeypatch):
