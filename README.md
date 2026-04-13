@@ -51,7 +51,11 @@ S3_BUCKET_NAME=your-s3-bucket-name
 REBRICKABLE_PARTS_CSV_URL=https://cdn.rebrickable.com/media/downloads/parts.csv.gz
 REBRICKABLE_CATEGORIES_CSV_URL=https://cdn.rebrickable.com/media/downloads/categories.csv.gz
 
-LDRAW_COMPLETE_LIBRARY_URL = https://library.ldraw.org/library/updates/complete.zip
+LDRAW_COMPLETE_LIBRARY_URL=https://library.ldraw.org/library/updates/complete.zip
+
+LOG_FILE=the path to the log file (default: logs/catalog_pipeline.log)
+FORCE_CLOUD_LOGGING=true to force cloud logging (default: false)
+CW_LOG_GROUP=the cloudwatch log group (default: lego-catalog-pipeline-dev)
 ```
 
 ## Usage

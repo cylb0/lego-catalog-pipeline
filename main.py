@@ -2,16 +2,17 @@ from src.core.config import Config, settings
 from src.core.file_utils import tmp_local_dir
 from src.core.logger import setup_logging
 from src.core.pipeline import CatalogPipeline
-import logging
-import os
-
-logger = logging.getLogger(__name__)
-
-is_lambda = "AWS_LAMBDA_FUNCTION_NAME" in os.environ
 
 
 def main(config: Config):
-    setup_logging(filename=config.LOG_FILE if not is_lambda else None)
+    cw_group = config.CLOUDWATCH_LOG_GROUP if config.FORCE_CLOUD_LOGGING else None
+    log_file = (
+        config.LOG_FILE
+        if (not config.IS_LAMBDA and not config.FORCE_CLOUD_LOGGING)
+        else None
+    )
+
+    setup_logging(filename=log_file, cloud_group=cw_group)
 
     with tmp_local_dir(config.TMP_DIR):
         pipeline = CatalogPipeline(config)
