@@ -25,6 +25,9 @@ class Config:
 
         self.LDRAW_URL = self._get_required_env("LDRAW_COMPLETE_LIBRARY_URL")
         self.LOG_FILE = os.getenv("LOG_FILE", "logs/catalog_pipeline.log")
+        self.CLOUDWATCH_LOG_GROUP = self._get_required_env("CLOUDWATCH_LOG_GROUP")
+        self.FORCE_CLOUD_LOGGING = os.getenv("FORCE_CLOUD_LOGGING", "False") == "True"
+        self.IS_LAMBDA = "AWS_LAMBDA_FUNCTION_NAME" in os.environ
 
     def _get_required_env(self, key: str) -> str:
         value = os.getenv(key)

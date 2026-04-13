@@ -63,3 +63,39 @@
 2026-04-13 11:55:13,702 - src.storage.s3_manager - INFO - Uploading tmp/manifest.json to s3://lego-catalog-storage/manifest.json...
 2026-04-13 11:55:13,776 - src.storage.s3_manager - INFO - Uploaded tmp/manifest.json to s3://lego-catalog-storage/manifest.json successfully
 2026-04-13 11:55:13,776 - src.storage.s3_manager - INFO - Manifest uploaded successfully
+2026-04-13 14:54:37,551 - botocore.credentials - INFO - Found credentials in environment variables.
+2026-04-13 14:54:37,598 - src.storage.s3_manager - INFO - Fetching manifest from s3://lego-catalog-storage/manifest.json...
+2026-04-13 14:54:37,785 - src.storage.s3_manager - INFO - Manifest fetched successfully
+2026-04-13 14:54:37,785 - src.core.pipeline - INFO - Starting catalog pipeline run
+2026-04-13 14:54:37,785 - src.ingestion.csv_downloader - INFO - Fetching resource parts from https://cdn.rebrickable.com/media/downloads/parts.csv.gz...
+2026-04-13 14:54:37,785 - src.ingestion.csv_downloader - INFO - Downloading csv from https://cdn.rebrickable.com/media/downloads/parts.csv.gz...
+2026-04-13 14:54:38,076 - src.ingestion.csv_downloader - INFO - Downloaded csv in tmp/parts_20260413145437.csv.gz
+2026-04-13 14:54:38,080 - src.ingestion.csv_downloader - INFO - Fetching resource categories from https://cdn.rebrickable.com/media/downloads/part_categories.csv.gz...
+2026-04-13 14:54:38,080 - src.ingestion.csv_downloader - INFO - Downloading csv from https://cdn.rebrickable.com/media/downloads/part_categories.csv.gz...
+2026-04-13 14:54:38,150 - src.ingestion.csv_downloader - INFO - Downloaded csv in tmp/part_categories_20260413145438.csv.gz
+2026-04-13 14:54:38,150 - src.core.pipeline - INFO - No changes detected for parts
+2026-04-13 14:54:38,150 - src.core.pipeline - INFO - No changes detected for categories
+2026-04-13 14:54:38,150 - src.ingestion.ldraw_manager - INFO - Getting latest version date...
+2026-04-13 14:54:38,157 - src.ingestion.ldraw_manager - INFO - Latest version date: Fri, 10 Apr 2026 12:06:19 GMT
+2026-04-13 14:54:38,157 - src.storage.s3_manager - INFO - Checking for LDraw changes...
+2026-04-13 14:54:38,157 - src.core.pipeline - INFO - Manifest before upload: 
+{
+    "ingestion": {
+        "csv_resources": {
+            "parts": {
+                "filename": "parts_20260413135938.csv.gz",
+                "hash": "1e48cc2a180dcfc3bfd24576858c591eed8d4a675bb54e8c0324bd4f2dccee8c"
+            },
+            "categories": {
+                "filename": "part_categories_20260413115513.csv.gz",
+                "hash": "0b8ca0ea8855a47655c9cf4f1f1c3ed2068465559a93342f7657bfb32e9aa092"
+            }
+        },
+        "ldraw": {
+            "filename": "ldraw.zip",
+            "last_modified": "Fri, 10 Apr 2026 12:06:19 GMT"
+        }
+    }
+}
+2026-04-13 14:54:38,157 - src.storage.s3_manager - INFO - Checking if manifest has changed...
+2026-04-13 14:54:38,157 - src.storage.s3_manager - INFO - No changes detected in manifest, skipping upload
