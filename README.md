@@ -82,6 +82,7 @@ lego-catalog-pipeline/
 │   │   ├── config.py           # Configuration management
 │   │   ├── file_utils.py       # File utility functions
 │   │   └── network_utils.py    # Network utility functions
+│   │   └── pipeline.py         # Pipeline logic
 │   ├── ingestion/
 │   │   ├── csv_downloader.py   # CSV downloading logic
 │   │   └── ldraw_manager.py  # LDraw library management
