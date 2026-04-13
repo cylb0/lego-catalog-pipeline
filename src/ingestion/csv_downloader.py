@@ -36,6 +36,8 @@ class CSVDownloader:
             logger.error(f"Resource {resource} not found")
             return None
 
+        logger.info(f"Fetching resource {resource} from {url}...")
+
         original_filename = os.path.basename(url)
         timestamped_filename = create_filename_with_timestamp(original_filename)
         local_path = join_path(self.tmp_dir, timestamped_filename)

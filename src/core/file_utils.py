@@ -4,6 +4,7 @@ import shutil
 from datetime import datetime
 import hashlib
 
+
 def join_path(path: str, filename: str) -> str:
     """
     Join a path and a filename
@@ -15,6 +16,7 @@ def join_path(path: str, filename: str) -> str:
     """
     return os.path.join(path, filename)
 
+
 def get_filename(path: str) -> str:
     """
     Get the filename from a path
@@ -23,6 +25,7 @@ def get_filename(path: str) -> str:
     :return: The filename
     """
     return os.path.basename(path)
+
 
 def create_filename_with_timestamp(filename: str) -> str:
     """
@@ -34,6 +37,7 @@ def create_filename_with_timestamp(filename: str) -> str:
     basename, extension = split_filename(filename)
     date = return_timestamp()
     return f"{basename}_{date}{extension}"
+
 
 def split_filename(filename: str) -> tuple[str, str]:
     """
@@ -49,6 +53,7 @@ def split_filename(filename: str) -> tuple[str, str]:
         basename, extension = filename, ""
     return basename, extension
 
+
 def hash_file(file_path: str) -> str:
     """
     Hash a file using SHA256, for performance reasons, it reads the file in 4KB chunks in binary mode
@@ -56,14 +61,13 @@ def hash_file(file_path: str) -> str:
     :param file_path: The path to the file to hash
     :return: The SHA256 hash of the file
     """
-    print(f"Hashing file: {file_path}")
     sha256_hash = hashlib.sha256()
     with open(file_path, "rb") as f:
         for byte_block in iter(lambda: f.read(4096), b""):
             sha256_hash.update(byte_block)
     file_hash = sha256_hash.hexdigest()
-    print(f"Hash: {file_hash}")
     return file_hash
+
 
 @contextmanager
 def tmp_local_dir(tmp_dir: str, cleanup: bool = True):
@@ -82,6 +86,7 @@ def tmp_local_dir(tmp_dir: str, cleanup: bool = True):
                 shutil.rmtree(tmp_dir)
         else:
             print(f"Skipping {os.path.abspath(tmp_dir)} cleanup")
+
 
 def return_timestamp() -> str:
     return datetime.now().strftime("%Y%m%d%H%M%S")
