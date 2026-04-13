@@ -32,12 +32,14 @@ class S3CatalogManager:
         :return: True if the bucket was cleared successfully, False otherwise
         """
         try:
+            logger.info(f"Clearing bucket {self.bucket}...")
             s3 = boto3.resource("s3")
             bucket = s3.Bucket(self.bucket)
             bucket.objects.all().delete()
+            logger.info(f"Bucket {self.bucket} cleared successfully")
             return True
         except ClientError as e:
-            print(f"S3 error clearing bucket: {e}")
+            logger.error(f"S3 error clearing bucket: {e}")
             return False
 
     def get_csv_filename(self, resource: str) -> str:
@@ -56,14 +58,18 @@ class S3CatalogManager:
         :return: The manifest file or an empty dictionary if it doesn't exist
         """
         try:
+            logger.info(
+                f"Fetching manifest from s3://{self.bucket}/{self.manifest_key}..."
+            )
             self.client.download_file(
                 self.bucket, self.manifest_key, self.local_manifest_path
             )
+            logger.info("Manifest fetched successfully")
             with open(self.local_manifest_path, "r") as f:
                 return json.load(f)
         except ClientError as e:
             if e.response["Error"]["Code"] == "404":
-                logger.error("No manifest found in S3, starting fresh.")
+                logger.warning("No manifest found in S3, starting fresh.")
             else:
                 logger.error(f"S3 error fetching manifest: {e}")
             return {}
@@ -81,9 +87,11 @@ class S3CatalogManager:
         :return: True if the manifest was saved successfully, False otherwise
         """
         try:
+            logger.info("Saving manifest locally...")
             with open(self.local_manifest_path, "w") as f:
                 json.dump(self.manifest.data, f)
             self.manifest.changed = True
+            logger.info("Manifest saved successfully")
             return True
         except IOError as e:
             logger.error(f"Error updating manifest locally: {e}")
@@ -98,8 +106,9 @@ class S3CatalogManager:
         :return: True if the file was uploaded successfully, False otherwise
         """
         try:
+            logger.info(f"Uploading {path} to s3://{self.bucket}/{s3_key}...")
             self.client.upload_file(path, self.bucket, s3_key)
-            logger.info(f"Uploaded {path} to s3://{self.bucket}/{s3_key}")
+            logger.info(f"Uploaded {path} to s3://{self.bucket}/{s3_key} successfully")
             return True
         except FileNotFoundError as e:
             logger.error(f"Local file not found: {path}")
@@ -116,8 +125,9 @@ class S3CatalogManager:
         :return: True if the file was removed successfully, False otherwise
         """
         try:
+            logger.info(f"Removing {s3_key} from s3://{self.bucket}...")
             self.client.delete_object(Bucket=self.bucket, Key=s3_key)
-            logger.info(f"Removed {s3_key} from s3://{self.bucket}")
+            logger.info(f"Removed {s3_key} from s3://{self.bucket} successfully")
             return True
         except ClientError as e:
             logger.error(f"S3 error removing file: {e}")
@@ -142,7 +152,9 @@ class S3CatalogManager:
         :param hash: The hash of the file
         :return: True if the manifest was updated successfully, False otherwise
         """
+        logger.info(f"Updating manifest with resource {resource}...")
         self.manifest.update_csv_resource(resource, filename, hash)
+        logger.info(f"Manifest updated with resource {resource}")
         return self._save_local_manifest()
 
     def check_for_ldraw_changes(self, remote_date: str) -> bool:
@@ -152,6 +164,7 @@ class S3CatalogManager:
         :param remote_date: The last modified date of the remote file
         :return: True if the LDraw library has changed, False otherwise
         """
+        logger.info("Checking for LDraw changes...")
         return self.manifest.check_ldraw_change(remote_date)
 
     def update_manifest_ldraw(self, filename: str, remote_date: str) -> bool:
@@ -162,7 +175,9 @@ class S3CatalogManager:
         :param remote_date: The last modified date of the remote file
         :return: True if the manifest was updated successfully, False otherwise
         """
+        logger.info("Updating manifest with LDraw library...")
         self.manifest.update_ldraw(filename, remote_date)
+        logger.info("Manifest updated with LDraw library")
         return self._save_local_manifest()
 
     def upload_manifest(self) -> bool:
@@ -171,13 +186,14 @@ class S3CatalogManager:
 
         :return: True if the manifest was uploaded successfully or if there were no changes, False otherwise
         """
+        logger.info("Checking if manifest has changed...")
         if not self.manifest.changed:
             logger.info("No changes detected in manifest, skipping upload")
             return True
 
         logger.info(f"Uploading manifest to s3://{self.bucket}/{self.manifest_key}")
         success = self.upload_to_s3(self.local_manifest_path, self.manifest_key)
-
+        logger.info("Manifest uploaded successfully")
         if success:
             self.manifest.changed = False
 

@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class Config:
     _instance = None
 
@@ -23,11 +24,13 @@ class Config:
         }
 
         self.LDRAW_URL = self._get_required_env("LDRAW_COMPLETE_LIBRARY_URL")
+        self.LOG_FILE = os.getenv("LOG_FILE", "logs/catalog_pipeline.log")
 
     def _get_required_env(self, key: str) -> str:
         value = os.getenv(key)
         if not value:
             raise ValueError(f"Environment variable {key} is not set or empty")
         return value
+
 
 settings = Config()
