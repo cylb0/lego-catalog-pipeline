@@ -5,6 +5,7 @@ import json
 from src.core.file_utils import return_timestamp
 from src.core.catalog_manifest import CatalogManifest
 
+
 class S3CatalogManager:
     def __init__(self, bucket: str, manifest_key: str, tmp_dir: str):
         """
@@ -14,7 +15,7 @@ class S3CatalogManager:
         :param manifest_key: The key of the manifest file in S3
         :param tmp_dir: The directory to download the manifest to
         """
-        self.client = boto3.client('s3')
+        self.client = boto3.client("s3")
         self.bucket: str = bucket
         self.manifest_key: str = manifest_key
         self.tmp_dir: str = tmp_dir
@@ -29,11 +30,13 @@ class S3CatalogManager:
         :return: The manifest file or an empty dictionary if it doesn't exist
         """
         try:
-            self.client.download_file(self.bucket, self.manifest_key, self.local_manifest_path)
-            with open(self.local_manifest_path, 'r') as f:
+            self.client.download_file(
+                self.bucket, self.manifest_key, self.local_manifest_path
+            )
+            with open(self.local_manifest_path, "r") as f:
                 return json.load(f)
         except ClientError as e:
-            if e.response['Error']['Code'] == '404':
+            if e.response["Error"]["Code"] == "404":
                 print("No manifest found in S3, starting fresh.")
             else:
                 print(f"S3 error fetching manifest: {e}")
@@ -52,14 +55,14 @@ class S3CatalogManager:
         :return: True if the manifest was saved successfully, False otherwise
         """
         try:
-            with open(self.local_manifest_path, 'w') as f:
+            with open(self.local_manifest_path, "w") as f:
                 json.dump(self.manifest.data, f)
             self.manifest.changed = True
             return True
         except IOError as e:
             print(f"Error updating manifest locally: {e}")
             return False
-    
+
     def upload_to_s3(self, path: str, s3_key: str) -> bool:
         """
         Upload a file to S3
@@ -116,6 +119,15 @@ class S3CatalogManager:
         self.manifest.update_csv_resource(resource, filename, hash)
         return self._save_local_manifest()
 
+    def check_for_ldraw_changes(self, remote_date: str) -> bool:
+        """
+        Check for differences between manifest and new LDraw library
+
+        :param remote_date: The last modified date of the remote file
+        :return: True if the LDraw library has changed, False otherwise
+        """
+        return self.manifest.check_ldraw_change(remote_date)
+
     def update_manifest_ldraw(self, filename: str, remote_date: str) -> bool:
         """
         Update the manifest with the new LDraw library
@@ -139,8 +151,8 @@ class S3CatalogManager:
 
         print(f"Uploading manifest to s3://{self.bucket}/{self.manifest_key}")
         success = self.upload_to_s3(self.local_manifest_path, self.manifest_key)
-        
+
         if success:
             self.manifest.changed = False
-            
+
         return success
