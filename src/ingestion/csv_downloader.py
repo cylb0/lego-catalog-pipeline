@@ -1,7 +1,16 @@
 from urllib.request import urlretrieve
-from src.core.file_utils import join_path, get_filename, create_filename_with_timestamp, hash_file
+from src.core.file_utils import (
+    join_path,
+    get_filename,
+    create_filename_with_timestamp,
+    hash_file,
+)
 import os
 from src.core.network_utils import handle_download_errors
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class CSVDownloader:
     def __init__(self, resources: dict[str, str], tmp_dir: str):
@@ -13,7 +22,7 @@ class CSVDownloader:
         """
         self.resources: dict[str, str] = resources
         self.tmp_dir: str = tmp_dir
-    
+
     def fetch_resource(self, resource: str) -> str | None:
         """
         Fetches a single csv file from a given url
@@ -24,7 +33,7 @@ class CSVDownloader:
         url = self.resources.get(resource)
 
         if not url:
-            print(f"Resource {resource} not found")
+            logger.error(f"Resource {resource} not found")
             return None
 
         original_filename = os.path.basename(url)
@@ -42,9 +51,9 @@ class CSVDownloader:
         :param path: The path to download the file to
         :return: The path to the downloaded file
         """
-        print(f"Downloading {url}...")
+        logger.info(f"Downloading csv from {url}...")
         urlretrieve(url, path)
-        print(f"Downloaded in {path}")
+        logger.info(f"Downloaded csv in {path}")
         return path
 
     def fetch_data(self) -> dict[str, dict[str, str]]:
