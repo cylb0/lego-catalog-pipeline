@@ -23,6 +23,15 @@ class S3CatalogManager:
         raw_manifest = self._fetch_manifest()
         self.manifest = CatalogManifest(raw_manifest)
 
+    def get_csv_filename(self, resource: str) -> str:
+        return self.manifest.get_csv_filename(resource)
+
+    def get_ldraw_filename(self) -> str:
+        return self.manifest.get_ldraw_filename()
+
+    def get_ldraw_last_modified(self) -> str:
+        return self.manifest.get_ldraw_last_modified()
+
     def _fetch_manifest(self):
         """
         Fetch the manifest file from S3

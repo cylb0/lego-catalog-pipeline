@@ -3,6 +3,20 @@ class CatalogManifest:
         self.data = data or {}
         self.changed = False
 
+    def get_csv_filename(self, resource: str) -> str:
+        return (
+            self.data.get("ingestion", {})
+            .get("csv_resources", {})
+            .get(resource, {})
+            .get("filename", "")
+        )
+
+    def get_ldraw_filename(self) -> str:
+        return self.data.get("ingestion", {}).get("ldraw", {}).get("filename", "")
+
+    def get_ldraw_last_modified(self) -> str:
+        return self.data.get("ingestion", {}).get("ldraw", {}).get("last_modified", "")
+
     def check_csv_change(self, resource: str, new_hash: str) -> bool:
         """
         Check if the CSV resource has changed.
