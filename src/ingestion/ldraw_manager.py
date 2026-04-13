@@ -19,6 +19,7 @@ class LdrawManager:
         return local_path[0]
 
     def get_latest_version_date(self):
+        logger.info("Getting latest version date...")
         req = Request(self.library_url, method="HEAD")
         with urlopen(req) as response:
             date = response.headers["Last-Modified"]
