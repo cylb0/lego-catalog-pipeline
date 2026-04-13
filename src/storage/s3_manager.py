@@ -2,8 +2,10 @@ import boto3
 from botocore.exceptions import ClientError
 import os
 import json
-from src.core.file_utils import return_timestamp
 from src.core.catalog_manifest import CatalogManifest
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class S3CatalogManager:
@@ -61,15 +63,15 @@ class S3CatalogManager:
                 return json.load(f)
         except ClientError as e:
             if e.response["Error"]["Code"] == "404":
-                print("No manifest found in S3, starting fresh.")
+                logger.error("No manifest found in S3, starting fresh.")
             else:
-                print(f"S3 error fetching manifest: {e}")
+                logger.error(f"S3 error fetching manifest: {e}")
             return {}
         except (json.JSONDecodeError, OSError) as e:
-            print(f"Error reading manifest: {e}")
+            logger.error(f"Error reading manifest: {e}")
             return {}
         except Exception as e:
-            print(f"Unexpected error fetching manifest: {e}")
+            logger.error(f"Unexpected error fetching manifest: {e}")
             return {}
 
     def _save_local_manifest(self) -> bool:
@@ -84,7 +86,7 @@ class S3CatalogManager:
             self.manifest.changed = True
             return True
         except IOError as e:
-            print(f"Error updating manifest locally: {e}")
+            logger.error(f"Error updating manifest locally: {e}")
             return False
 
     def upload_to_s3(self, path: str, s3_key: str) -> bool:
@@ -97,13 +99,13 @@ class S3CatalogManager:
         """
         try:
             self.client.upload_file(path, self.bucket, s3_key)
-            print(f"Uploaded {path} to s3://{self.bucket}/{s3_key}")
+            logger.info(f"Uploaded {path} to s3://{self.bucket}/{s3_key}")
             return True
         except FileNotFoundError as e:
-            print(f"Local file not found: {path}")
+            logger.error(f"Local file not found: {path}")
             return False
         except ClientError as e:
-            print(f"S3 error uploading file: {e}")
+            logger.error(f"S3 error uploading file: {e}")
             return False
 
     def remove_from_s3(self, s3_key: str) -> bool:
@@ -115,10 +117,10 @@ class S3CatalogManager:
         """
         try:
             self.client.delete_object(Bucket=self.bucket, Key=s3_key)
-            print(f"Removed {s3_key} from s3://{self.bucket}")
+            logger.info(f"Removed {s3_key} from s3://{self.bucket}")
             return True
         except ClientError as e:
-            print(f"S3 error removing file: {e}")
+            logger.error(f"S3 error removing file: {e}")
             return False
 
     def check_for_resource_changes(self, resource: str, hash: str) -> bool:
@@ -170,10 +172,10 @@ class S3CatalogManager:
         :return: True if the manifest was uploaded successfully or if there were no changes, False otherwise
         """
         if not self.manifest.changed:
-            print(f"No changes detected in manifest, skipping upload")
+            logger.info("No changes detected in manifest, skipping upload")
             return True
 
-        print(f"Uploading manifest to s3://{self.bucket}/{self.manifest_key}")
+        logger.info(f"Uploading manifest to s3://{self.bucket}/{self.manifest_key}")
         success = self.upload_to_s3(self.local_manifest_path, self.manifest_key)
 
         if success:
