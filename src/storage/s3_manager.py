@@ -23,6 +23,21 @@ class S3CatalogManager:
         raw_manifest = self._fetch_manifest()
         self.manifest = CatalogManifest(raw_manifest)
 
+    def clear_bucket(self) -> bool:
+        """
+        WARNING: Clear the S3 bucket
+
+        :return: True if the bucket was cleared successfully, False otherwise
+        """
+        try:
+            s3 = boto3.resource("s3")
+            bucket = s3.Bucket(self.bucket)
+            bucket.objects.all().delete()
+            return True
+        except ClientError as e:
+            print(f"S3 error clearing bucket: {e}")
+            return False
+
     def get_csv_filename(self, resource: str) -> str:
         return self.manifest.get_csv_filename(resource)
 
