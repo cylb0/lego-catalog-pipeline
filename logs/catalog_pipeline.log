@@ -1,0 +1,22 @@
+INFO:botocore.credentials:Found credentials in environment variables.
+INFO:__main__:No changes detected for parts
+INFO:__main__:No changes detected for categories
+INFO:__main__:Manifest before upload: 
+{
+    "ingestion": {
+        "csv_resources": {
+            "parts": {
+                "filename": "parts_20260413093909.csv.gz",
+                "hash": "af31bcb2a51f1a01ab136a9c6c0ff981d042254365ee86ec1057f6dde7e880a8"
+            },
+            "categories": {
+                "filename": "part_categories_20260413093913.csv.gz",
+                "hash": "0b8ca0ea8855a47655c9cf4f1f1c3ed2068465559a93342f7657bfb32e9aa092"
+            }
+        },
+        "ldraw": {
+            "filename": "ldraw.zip",
+            "last_modified": "Fri, 10 Apr 2026 12:06:19 GMT"
+        }
+    }
+}
