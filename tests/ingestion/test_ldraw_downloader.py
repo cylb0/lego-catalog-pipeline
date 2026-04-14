@@ -1,5 +1,5 @@
 from unittest.mock import MagicMock, patch
-from src.ingestion.ldraw_manager import LdrawManager
+from src.ingestion.ldraw_downloader import LdrawDownloader
 from urllib.request import Request
 import pytest
 
@@ -8,11 +8,11 @@ import pytest
 def manager():
     url = "http://localhost:8000"
     tmp_dir = "tmp"
-    return LdrawManager(url, tmp_dir)
+    return LdrawDownloader(url, tmp_dir)
 
 
 class TestGetLatestVersionDate:
-    @patch("src.ingestion.ldraw_manager.urlopen")
+    @patch("src.ingestion.ldraw_downloader.urlopen")
     def test_get_latest_version_date(self, mock_urlopen, manager):
         mock_response = MagicMock()
         mock_response.headers = {"Last-Modified": "Fri, 10 Apr 2026 12:06:19 GMT"}
@@ -29,7 +29,7 @@ class TestGetLatestVersionDate:
         assert actual_request.full_url == manager.library_url
         assert actual_request.get_method() == "HEAD"
 
-    @patch("src.ingestion.ldraw_manager.urlopen")
+    @patch("src.ingestion.ldraw_downloader.urlopen")
     def test_get_latest_version_date_missing_header(
         self, mock_urlopen, manager, caplog
     ):
