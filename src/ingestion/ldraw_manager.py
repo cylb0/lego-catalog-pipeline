@@ -18,6 +18,7 @@ class LdrawManager:
         logger.info(f"Ldraw library downloaded successfully to {local_path[0]}")
         return local_path[0]
 
+    @handle_download_errors
     def get_latest_version_date(self):
         logger.info("Getting latest version date...")
         req = Request(self.library_url, method="HEAD")
