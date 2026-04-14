@@ -198,3 +198,21 @@ class S3CatalogManager:
             self.manifest.changed = False
 
         return success
+
+    def get_existing_glbs_list(self):
+        """
+        Returns a set of part IDs that already have a .glb on S3
+        """
+        existing_glbs = set()
+
+        paginator = self.client.get_paginator("list_objects_v2")
+
+        for page in paginator.paginate(Bucket=self.bucket, Prefix="glbs/"):
+            if "Contents" in page:
+                for obj in page["Contents"]:
+                    key = obj["Key"]
+                    if key.endswith(".glb"):
+                        part_id = key.split("/")[-1].replace(".glb", "")
+                        existing_glbs.add(part_id)
+
+        return existing_glbs

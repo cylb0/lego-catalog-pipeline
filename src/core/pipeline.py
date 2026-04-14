@@ -75,3 +75,6 @@ class CatalogPipeline:
         self.s3_manager.upload_to_s3(local_ldraw, s3_key)
         self.s3_manager.update_manifest_ldraw(s3_key, remote_date)
         logger.info("LDraw library synced successfully")
+
+    def list_s3_glbs(self):
+        return self.s3_manager.get_existing_glbs_list()
