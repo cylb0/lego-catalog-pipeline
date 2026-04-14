@@ -1,7 +1,7 @@
 from .config import Config
 from src.storage.s3_manager import S3CatalogManager
 from src.ingestion.csv_downloader import CSVDownloader
-from src.ingestion.ldraw_manager import LdrawManager
+from src.ingestion.ldraw_downloader import LdrawDownloader
 import logging
 import json
 
@@ -19,7 +19,9 @@ class CatalogPipeline:
             self.config.S3_BUCKET, self.config.MANIFEST_PATH, self.config.TMP_DIR
         )
         self.csv_downloader = CSVDownloader(self.config.RESOURCES, self.config.TMP_DIR)
-        self.ldraw_manager = LdrawManager(self.config.LDRAW_URL, self.config.TMP_DIR)
+        self.ldraw_downloader = LdrawDownloader(
+            self.config.LDRAW_URL, self.config.TMP_DIR
+        )
 
     def run(self):
         logger.info("Starting catalog pipeline run")
@@ -29,11 +31,11 @@ class CatalogPipeline:
         for resource, data in downloads.items():
             self._sync_resource(resource, data)
 
-        latest_ldraw_date = self.ldraw_manager.get_latest_version_date()
+        latest_ldraw_date = self.ldraw_downloader.get_latest_version_date()
 
         if self.s3_manager.check_for_ldraw_changes(latest_ldraw_date):
             logger.info("New LDraw library detected, downloading and uploading to S3")
-            local_ldraw = self.ldraw_manager.fetch_library()
+            local_ldraw = self.ldraw_downloader.fetch_library()
             self._sync_ldraw(local_ldraw, latest_ldraw_date)
 
         logger.info(

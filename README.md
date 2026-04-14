@@ -89,16 +89,16 @@ lego-catalog-pipeline/
 │   │   └── pipeline.py         # Pipeline logic
 │   ├── ingestion/
 │   │   ├── csv_downloader.py   # CSV downloading logic
-│   │   └── ldraw_manager.py  # LDraw library management
+│   │   └── ldraw_downloader.py # LDraw library management
 │   └── storage/
-│   │   └── s3_manager.py     # S3 interaction logic
-├── tests/                    # Unit testing suite
-├── logs/                     # Application logs
-├── main.py                   # Pipeline entry point
-├── pytest.ini                # Pytest configuration
-├── requirements.txt          # Project dependencies
-├── .env                      # Environment variables (not version controlled)
-└── README.md                 # Project documentation
+│   │   └── s3_manager.py       # S3 interaction logic
+├── tests/                      # Unit testing suite
+├── logs/                       # Application logs
+├── main.py                     # Pipeline entry point
+├── pytest.ini                  # Pytest configuration
+├── requirements.txt            # Project dependencies
+├── .env                        # Environment variables (not version controlled)
+└── README.md                   # Project documentation
 ```
 
 ## Testing

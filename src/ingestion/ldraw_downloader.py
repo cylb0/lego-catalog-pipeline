@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class LdrawManager:
+class LdrawDownloader:
     def __init__(self, library_url: str, tmp_dir: str):
         self.library_url = library_url
         self.tmp_dir = tmp_dir
