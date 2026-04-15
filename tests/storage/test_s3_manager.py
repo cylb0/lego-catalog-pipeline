@@ -1,10 +1,11 @@
-from src.storage.s3_manager import S3CatalogManager
+from src.storage import S3CatalogManager
 import boto3
 from botocore.exceptions import ClientError
 import json
 import builtins
 from unittest.mock import mock_open, MagicMock, patch
 import pytest
+import pandas
 
 MOCK_MANIFEST = {
     "ingestion": {
@@ -24,6 +25,7 @@ def mock_s3_client_working(monkeypatch):
     class MockS3Client:
         def __init__(self):
             self.get_paginator = MagicMock()
+            self.get_object = MagicMock()
 
         def download_file(self, Bucket, Key, Filename):
             pass
@@ -79,26 +81,18 @@ class TestCheckForResourceChangesLogic:
     NEW_HASH = "new_hash"
 
     def test_check_for_resource_changes_resource_changed(self, manager):
-        assert (
-            manager.check_for_resource_changes(self.EXISTING_RESOURCE, self.NEW_HASH)
-            == True
-        )
+        assert manager.check_for_resource_changes(self.EXISTING_RESOURCE, self.NEW_HASH)
 
     def test_check_for_resource_changes_no_changes(self, manager):
-        assert (
-            manager.check_for_resource_changes(
-                self.EXISTING_RESOURCE, self.EXISTING_HASH
-            )
-            == False
+        assert not manager.check_for_resource_changes(
+            self.EXISTING_RESOURCE, self.EXISTING_HASH
         )
 
     def test_check_for_resource_changes_new_resource(self, manager):
-        assert (
-            manager.check_for_resource_changes(self.NEW_RESOURCE, self.NEW_HASH) == True
-        )
+        assert manager.check_for_resource_changes(self.NEW_RESOURCE, self.NEW_HASH)
 
     def test_check_for_resource_changes_hash_missing(self, monkeypatch, manager):
-        assert manager.check_for_resource_changes(self.EXISTING_RESOURCE, None) == True
+        assert manager.check_for_resource_changes(self.EXISTING_RESOURCE, None)
 
 
 class TestUploadToS3Logic:
@@ -280,7 +274,7 @@ class TestGetExistingGlbsListLogic:
             },
         )
 
-        result = manager.get_existing_glbs_list()
+        result = manager._get_existing_glbs_list()
 
         assert result == {"3001", "3003", "3005"}
         manager.client.get_paginator.assert_called_once_with("list_objects_v2")
@@ -294,7 +288,7 @@ class TestGetExistingGlbsListLogic:
 
         mock_paginator.paginate.return_value = {}
 
-        result = manager.get_existing_glbs_list()
+        result = manager._get_existing_glbs_list()
 
         assert result == set()
         manager.client.get_paginator.assert_called_once_with("list_objects_v2")
@@ -322,10 +316,160 @@ class TestGetExistingGlbsListLogic:
             },
         )
 
-        result = manager.get_existing_glbs_list()
+        result = manager._get_existing_glbs_list()
 
         assert result == {"3001", "3003", "3005"}
         manager.client.get_paginator.assert_called_once_with("list_objects_v2")
         mock_paginator.paginate.assert_called_once_with(
             Bucket=manager.bucket, Prefix="glbs/"
         )
+
+
+class TestGetPartIdsFromCSVLogic:
+    def test_get_part_ids_from_csv_success(self, manager):
+        manager.get_csv_filename = MagicMock(return_value="test_parts.csv.gz")
+
+        with (
+            patch.object(manager.client, "get_object") as mock_get,
+            patch("gzip.GzipFile"),
+            patch("pandas.read_csv") as mock_read,
+        ):
+            mock_read.return_value = pandas.DataFrame({"part_num": ["3001", "3003"]})
+
+            result = manager._get_part_ids_from_csv()
+
+            assert result == {"3001", "3003"}
+            mock_get.assert_called_once_with(
+                Bucket=manager.bucket, Key="test_parts.csv.gz"
+            )
+
+    def test_get_part_ids_from_csv_missing_filename(self, manager):
+        manager.get_csv_filename = MagicMock(return_value="")
+
+        with (
+            patch.object(manager.client, "get_object") as mock_get,
+            patch("gzip.GzipFile") as mock_gzip,
+            patch("pandas.read_csv") as mock_read,
+        ):
+            result = manager._get_part_ids_from_csv()
+
+            assert result == set()
+            mock_get.assert_not_called()
+            mock_gzip.assert_not_called()
+            mock_read.assert_not_called()
+
+    def test_get_part_ids_from_csv_different_datatype_part_nums(self, manager):
+        manager.get_csv_filename = MagicMock(return_value="test_parts.csv.gz")
+
+        with (
+            patch.object(manager.client, "get_object") as mock_get,
+            patch("gzip.GzipFile"),
+            patch("pandas.read_csv") as mock_read,
+        ):
+            mock_read.return_value = pandas.DataFrame(
+                {"part_num": [3001, "3003", "3245a"]}
+            )
+
+            result = manager._get_part_ids_from_csv()
+
+            assert result == {"3001", "3003", "3245a"}
+            mock_get.assert_called_once_with(
+                Bucket=manager.bucket, Key="test_parts.csv.gz"
+            )
+
+    def test_get_part_ids_from_csv_duplicate_part_nums(self, manager):
+        manager.get_csv_filename = MagicMock(return_value="test_parts.csv.gz")
+
+        with (
+            patch.object(manager.client, "get_object") as mock_get,
+            patch("gzip.GzipFile"),
+            patch("pandas.read_csv") as mock_read,
+        ):
+            mock_read.return_value = pandas.DataFrame(
+                {"part_num": ["3001", "3003", "3001"]}
+            )
+
+            result = manager._get_part_ids_from_csv()
+
+            assert result == {"3001", "3003"}
+            mock_get.assert_called_once_with(
+                Bucket=manager.bucket, Key="test_parts.csv.gz"
+            )
+
+    def test_get_part_ids_from_csv_corrupted_csv(self, manager):
+        manager.get_csv_filename = MagicMock(return_value="corrupted_parts.csv.gz")
+
+        with (
+            patch.object(manager.client, "get_object") as mock_get,
+            patch("gzip.GzipFile") as mock_gzip,
+            patch("pandas.read_csv") as mock_read,
+        ):
+            mock_gzip.side_effect = Exception("Corrupted gzip file")
+
+            result = manager._get_part_ids_from_csv()
+
+            assert result == set()
+            mock_get.assert_called_once_with(
+                Bucket=manager.bucket, Key="corrupted_parts.csv.gz"
+            )
+            mock_read.assert_not_called()
+
+    def test_get_part_ids_from_csv_empty_csv(self, manager):
+        manager.get_csv_filename = MagicMock(return_value="empty_parts.csv.gz")
+
+        with (
+            patch.object(manager.client, "get_object") as mock_get,
+            patch("gzip.GzipFile"),
+            patch("pandas.read_csv") as mock_read,
+        ):
+            mock_read.return_value = pandas.DataFrame({"part_num": []})
+
+            result = manager._get_part_ids_from_csv()
+
+            assert result == set()
+            mock_get.assert_called_once_with(
+                Bucket=manager.bucket, Key="empty_parts.csv.gz"
+            )
+
+
+class TestSyncStateLogic:
+    def test_get_sync_state_success(self, manager):
+        manager._get_part_ids_from_csv = MagicMock(return_value={"a", "b", "c"})
+        manager._get_existing_glbs_list = MagicMock(return_value={"a"})
+        manager._get_available_part_ids_ldraw = MagicMock(return_value={"a", "b"})
+
+        state = manager.get_sync_state()
+
+        assert state["to_convert_state"] == {"b"}
+
+    def test_get_orphan_ids_no_orphans(self, manager):
+        csv_ids = {"a", "b", "c"}
+        manager._get_existing_glbs_list = MagicMock(return_value={"a", "b", "c"})
+
+        result = manager._get_orphan_ids(csv_ids)
+
+        assert result == set()
+
+    def test_get_orphan_ids_orphan_found(self, manager):
+        csv_ids = {"a", "b"}
+        manager._get_existing_glbs_list = MagicMock(return_value={"a", "b", "c"})
+
+        result = manager._get_orphan_ids(csv_ids)
+
+        assert result == {"c"}
+
+    def test_get_orphan_ids_fresh_bucket(self, manager):
+        csv_ids = {"a", "b", "c"}
+        manager._get_existing_glbs_list = MagicMock(return_value=set())
+
+        result = manager._get_orphan_ids(csv_ids)
+
+        assert result == set()
+
+    def test_get_orphan_ids_empty_catalog(self, manager):
+        csv_ids = set()
+        manager._get_existing_glbs_list = MagicMock(return_value={"a", "b", "c"})
+
+        result = manager._get_orphan_ids(csv_ids)
+
+        assert result == {"a", "b", "c"}

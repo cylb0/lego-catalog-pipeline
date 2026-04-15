@@ -1,5 +1,5 @@
 from unittest.mock import MagicMock, patch
-from src.ingestion.ldraw_downloader import LdrawDownloader
+from src.ingestion import LdrawDownloader
 from urllib.request import Request
 import pytest
 
@@ -42,3 +42,24 @@ class TestGetLatestVersionDate:
 
         assert result is None
         assert "Unexpected error for get_latest_version_date" in caplog.text
+
+
+def test_create_index_logic_complete(manager):
+    with patch("zipfile.ZipFile") as mock_zip:
+        mock_zip.return_value.__enter__.return_value.namelist.return_value = [
+            "complete/3001.dat",
+            "complete/3002.zip",
+            "complete/ldraw/3003.dat",
+            "complete/ldraw/3004.zip",
+            "complete/ldraw/p/3005.dat",
+            "complete/ldraw/p/3006.zip",
+            "complete/ldraw/parts/3007.dat",
+            "complete/ldraw/parts/3008.zip",
+            "complete/ldraw/parts/s/3009.dat",
+            "complete/ldraw/parts/s/3010.zip",
+        ]
+
+        result = manager.create_index("test.zip")
+        print("result", result)
+
+        assert result == {"3007"}

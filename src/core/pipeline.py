@@ -1,7 +1,7 @@
 from .config import Config
-from src.storage.s3_manager import S3CatalogManager
-from src.ingestion.csv_downloader import CSVDownloader
-from src.ingestion.ldraw_downloader import LdrawDownloader
+from src.storage import S3CatalogManager
+from src.ingestion import CSVDownloader
+from src.ingestion import LdrawDownloader
 import logging
 import json
 
@@ -46,6 +46,13 @@ class CatalogPipeline:
         )
         self.s3_manager.upload_manifest()
 
+        sync_state = self.s3_manager.get_sync_state()
+
+        self.s3_manager.cleanup_orphan_glbs(sync_state["csv_state"])
+
+        if sync_state["to_convert_state"]:
+            self._convert_parts(sync_state["to_convert_state"])
+
     def _sync_resource(self, resource: str, data: dict):
         """
         Sync a resource to S3.
@@ -64,15 +71,15 @@ class CatalogPipeline:
         """
         Sync LDraw library to S3.
         """
-        if not self.s3_manager.check_for_ldraw_changes(remote_date):
-            logger.info("No changes detected for LDraw library")
-            return
+        logger.info("Creating LDraw index...")
+        available_ids = self.ldraw_downloader.create_index(local_ldraw)
+        self.s3_manager.update_manifest_ldraw_index(available_ids)
 
-        logger.info("Changes detected for LDraw library, uploading to S3")
+        logger.info("Uploading LDraw library to S3")
         s3_key = "ldraw.zip"
-        self.s3_manager.upload_to_s3(local_ldraw, s3_key)
-        self.s3_manager.update_manifest_ldraw(s3_key, remote_date)
-        logger.info("LDraw library synced successfully")
+        if self.s3_manager.upload_to_s3(local_ldraw, s3_key):
+            self.s3_manager.update_manifest_ldraw(s3_key, remote_date)
+            logger.info("LDraw library synced successfully")
 
-    def list_s3_glbs(self):
-        return self.s3_manager.get_existing_glbs_list()
+    def _convert_parts(self, part_ids: set[str]):
+        pass

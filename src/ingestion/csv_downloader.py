@@ -1,12 +1,12 @@
 from urllib.request import urlretrieve
-from src.core.file_utils import (
+from src.core.utils import (
     join_path,
     get_filename,
     create_filename_with_timestamp,
     hash_file,
+    handle_download_errors,
 )
 import os
-from src.core.network_utils import handle_download_errors
 import logging
 
 logger = logging.getLogger(__name__)

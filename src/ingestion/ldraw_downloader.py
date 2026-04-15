@@ -1,7 +1,8 @@
-from src.core.file_utils import join_path
+from src.core.utils import join_path, handle_download_errors
 from urllib.request import urlretrieve, Request, urlopen
-from src.core.network_utils import handle_download_errors
 import logging
+import zipfile
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -26,3 +27,21 @@ class LdrawDownloader:
             date = response.headers["Last-Modified"]
             logger.info(f"Latest version date: {date}")
             return date
+
+    def create_index(self, local_ldraw: str) -> set[str]:
+        print("local_ldraw", local_ldraw)
+        """
+        Creates an index containing every available part within ldraw archive.
+        :return: A set containing every part id
+        """
+        available_ids = set()
+        logger.info(f"Indexing Ldraw library at {local_ldraw}...")
+
+        with zipfile.ZipFile(local_ldraw, "r") as z:
+            for filepath in z.namelist():
+                if "complete/ldraw/parts" in filepath and filepath.endswith(".dat"):
+                    if "/s/" not in filepath:
+                        filename = os.path.basename(filepath)
+                        part_id = filename.lower().replace(".dat", "")
+                        available_ids.add(part_id)
+        return available_ids
