@@ -1,6 +1,5 @@
 from .catalog_manifest import CatalogManifest
 from .config import settings, Config
-from .pipeline import CatalogPipeline
 from .logger import setup_logging
 
 

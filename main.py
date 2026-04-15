@@ -1,5 +1,6 @@
-from src.core import Config, settings, CatalogPipeline, setup_logging
+from src.core import Config, settings, setup_logging
 from src.core.utils import tmp_local_dir
+from src.core.pipeline import CatalogPipeline
 
 
 def main(config: Config):
