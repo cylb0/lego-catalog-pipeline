@@ -17,6 +17,9 @@ class CatalogManifest:
     def get_ldraw_last_modified(self) -> str:
         return self.data.get("ingestion", {}).get("ldraw", {}).get("last_modified", "")
 
+    def get_ldraw_index(self) -> dict[str, dict]:
+        return self.data.get("ingestion", {}).get("ldraw", {}).get("index", {})
+
     def check_csv_change(self, resource: str, new_hash: str) -> bool:
         """
         Check if the CSV resource has changed.
@@ -73,7 +76,21 @@ class CatalogManifest:
 
         ingestion = self.data.setdefault("ingestion", {})
 
-        ingestion["ldraw"] = {"filename": filename, "last_modified": last_modified}
+        ldraw = ingestion.setdefault("ldraw", {})
+        ldraw["filename"] = filename
+        ldraw["last_modified"] = last_modified
         self.changed = True
 
+        return True
+
+    def update_ldraw_index(self, available_ids: set[str]) -> bool:
+        index = {part_id: {} for part_id in available_ids}
+
+        if self.get_ldraw_index() == index:
+            return False
+
+        ingestion = self.data.setdefault("ingestion", {})
+        ldraw = ingestion.setdefault("ldraw", {})
+        ldraw["index"] = index
+        self.changed = True
         return True

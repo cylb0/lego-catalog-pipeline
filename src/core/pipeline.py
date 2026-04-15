@@ -1,7 +1,7 @@
 from .config import Config
-from src.storage.s3_manager import S3CatalogManager
-from src.ingestion.csv_downloader import CSVDownloader
-from src.ingestion.ldraw_downloader import LdrawDownloader
+from src.storage import S3CatalogManager
+from src.ingestion import CSVDownloader
+from src.ingestion import LdrawDownloader
 import logging
 import json
 
@@ -27,12 +27,14 @@ class CatalogPipeline:
         logger.info("Starting catalog pipeline run")
 
         downloads = self.csv_downloader.fetch_data()
-
         for resource, data in downloads.items():
-            self._sync_resource(resource, data)
+            if self.s3_manager.check_for_resource_changes(resource, data["hash"]):
+                logger.info(f"Changes detected for {resource}, uploading to S3")
+                self._sync_resource(resource, data)
+            else:
+                logger.info(f"No change detected for {resource}")
 
         latest_ldraw_date = self.ldraw_downloader.get_latest_version_date()
-
         if self.s3_manager.check_for_ldraw_changes(latest_ldraw_date):
             logger.info("New LDraw library detected, downloading and uploading to S3")
             local_ldraw = self.ldraw_downloader.fetch_library()
@@ -44,17 +46,17 @@ class CatalogPipeline:
         )
         self.s3_manager.upload_manifest()
 
+        sync_state = self.s3_manager.get_sync_state()
+
+        self.s3_manager.cleanup_orphan_glbs(sync_state["csv_state"])
+
+        if sync_state["to_convert_state"]:
+            self._convert_parts(sync_state["to_convert_state"])
+
     def _sync_resource(self, resource: str, data: dict):
         """
-        Sync a resource to S3 if it has changed.
-        :param resource: The name of the resource to sync
-        :param data: The data to sync
+        Sync a resource to S3.
         """
-        if not self.s3_manager.check_for_resource_changes(resource, data["hash"]):
-            logger.info(f"No changes detected for {resource}")
-            return
-
-        logger.info(f"Changes detected for {resource}, uploading to S3")
         old_filename = self.s3_manager.get_csv_filename(resource)
 
         if self.s3_manager.upload_to_s3(data["local_path"], data["filename"]):
@@ -66,12 +68,18 @@ class CatalogPipeline:
         logger.info(f"Resource {resource} synced successfully")
 
     def _sync_ldraw(self, local_ldraw: str, remote_date: str):
-        if not self.s3_manager.check_for_ldraw_changes(remote_date):
-            logger.info("No changes detected for LDraw library")
-            return
+        """
+        Sync LDraw library to S3.
+        """
+        logger.info("Creating LDraw index...")
+        available_ids = self.ldraw_downloader.create_index(local_ldraw)
+        self.s3_manager.update_manifest_ldraw_index(available_ids)
 
-        logger.info("Changes detected for LDraw library, uploading to S3")
+        logger.info("Uploading LDraw library to S3")
         s3_key = "ldraw.zip"
-        self.s3_manager.upload_to_s3(local_ldraw, s3_key)
-        self.s3_manager.update_manifest_ldraw(s3_key, remote_date)
-        logger.info("LDraw library synced successfully")
+        if self.s3_manager.upload_to_s3(local_ldraw, s3_key):
+            self.s3_manager.update_manifest_ldraw(s3_key, remote_date)
+            logger.info("LDraw library synced successfully")
+
+    def _convert_parts(self, part_ids: set[str]):
+        pass

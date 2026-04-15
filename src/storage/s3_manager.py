@@ -2,8 +2,10 @@ import boto3
 from botocore.exceptions import ClientError
 import os
 import json
-from src.core.catalog_manifest import CatalogManifest
+from src.core import CatalogManifest
 import logging
+import gzip
+import pandas
 
 logger = logging.getLogger(__name__)
 
@@ -180,6 +182,17 @@ class S3CatalogManager:
         logger.info("Manifest updated with LDraw library")
         return self._save_local_manifest()
 
+    def update_manifest_ldraw_index(self, available_ids: set[str]) -> bool:
+        """
+        Update the manifest with the new LDraw index
+
+        :param available_ids: The LDraw index to update
+        :return: True if the manifest was updated successfully, False otherwise
+        """
+        logger.info(f"Updating manifest with {len(available_ids)} LDraw part IDs...")
+        self.manifest.update_ldraw_index(available_ids)
+        return self._save_local_manifest()
+
     def upload_manifest(self) -> bool:
         """
         Upload the manifest to S3 if it has changed
@@ -198,3 +211,101 @@ class S3CatalogManager:
             self.manifest.changed = False
 
         return success
+
+    def _get_existing_glbs_list(self) -> set[str]:
+        """
+        Returns a set of part IDs that already have a .glb on S3
+        """
+        existing_glbs = set()
+
+        paginator = self.client.get_paginator("list_objects_v2")
+
+        for page in paginator.paginate(Bucket=self.bucket, Prefix="glbs/"):
+            if "Contents" in page:
+                for obj in page["Contents"]:
+                    key = obj["Key"]
+                    if key.endswith(".glb"):
+                        part_id = key.split("/")[-1].replace(".glb", "")
+                        existing_glbs.add(part_id.lower())
+
+        return existing_glbs
+
+    def _get_part_ids_from_csv(self) -> set[str]:
+        """
+        Returns a set of part IDs from a CSV resource
+        """
+        filename = self.get_csv_filename("parts")
+
+        if not filename:
+            logger.error("No filename found for resource parts in manifest")
+            return set()
+
+        try:
+            logger.info(f"Reading {filename} to get part IDs")
+            response = self.client.get_object(Bucket=self.bucket, Key=filename)
+
+            with gzip.GzipFile(fileobj=response["Body"]) as gz:
+                df = pandas.read_csv(gz, usecols=["part_num"])
+
+            return set(df["part_num"].astype(str).str.lower())
+        except ClientError as e:
+            logger.error(f"S3 error fetching CSV: {e}")
+            return set()
+        except Exception as e:
+            logger.error(f"Error reading CSV: {e}")
+            return set()
+
+    def _get_available_part_ids_ldraw(self) -> set[str]:
+        available_ids = self.manifest.data.get("ldraw_index", {})
+
+        if not available_ids:
+            logger.warning("No LDraw index found in manifest")
+            return set()
+
+        return set(available_ids.keys())
+
+    def get_sync_state(self):
+        """
+        Three-way comparison between CSV, GLB and LDraw states
+        Returns:
+            dict: Snapshot containing
+                - "csv_state" (goal state),
+                - "glb_state" (current state),
+                - "to_convert_state" (capability state)
+        """
+        logger.info("Getting part IDs to convert")
+        csv_state = self._get_part_ids_from_csv()
+        glb_state = self._get_existing_glbs_list()
+        ldraw_state = self._get_available_part_ids_ldraw()
+
+        missing_ids = csv_state - glb_state
+        to_convert_state = missing_ids.intersection(ldraw_state)
+
+        logger.info(
+            f"{len(to_convert_state)} parts ready for conversion: {to_convert_state}"
+        )
+        return {
+            "csv_state": csv_state,
+            "glb_state": glb_state,
+            "to_convert_state": to_convert_state,
+        }
+
+    def _get_orphan_ids(self, csv_ids: set[str]):
+        existing_ids = self._get_existing_glbs_list()
+        return existing_ids - csv_ids
+
+    def cleanup_orphan_glbs(self, csv_ids: set[str]):
+        """
+        Remove GLBs that are no longer present in the CSV
+        """
+        orphan_ids = self._get_orphan_ids(csv_ids)
+
+        if not orphan_ids:
+            logger.info("No orphan GLBs found. Skipping cleanup")
+            return
+
+        for id in orphan_ids:
+            key = f"glbs/{id}.glb"
+            self.remove_from_s3(key)
+
+        logger.info(f"Removed {len(orphan_ids)} orphan GLBs")

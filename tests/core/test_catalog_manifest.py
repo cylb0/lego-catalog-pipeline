@@ -1,4 +1,4 @@
-from src.core.catalog_manifest import CatalogManifest
+from src.core import CatalogManifest
 import pytest
 
 LAST_MODIFIED_DATE = "Mon, 13 Apr 2026 00:00:00 GMT"
@@ -151,3 +151,37 @@ class TestCalatogManifestUpdateLdraw:
             "filename": "ldraw.zip",
             "last_modified": LAST_MODIFIED_DATE,
         }
+
+
+class TestCatalogManifestUpdateLdrawIndex:
+    existing_index = {"3001": {}, "3003": {}}
+    new_index = {"3001": {}, "3003": {}, "3004": {}}
+
+    def test_update_ldraw_index_empty_manifest(self):
+        manifest = CatalogManifest({})
+        assert manifest.update_ldraw_index(self.existing_index)
+        assert manifest.changed
+        assert manifest.data["ingestion"]["ldraw"]["index"] == self.existing_index
+
+    def test_update_ldraw_new_ldraw_index(self, manifest):
+        manifest.data["ingestion"]["ldraw"]["index"] = self.existing_index
+        assert manifest.update_ldraw_index(self.new_index)
+        assert manifest.changed
+        assert manifest.data["ingestion"]["ldraw"]["index"] == self.new_index
+
+    def test_update_ldraw_no_change(self, manifest):
+        manifest.data["ingestion"]["ldraw"]["index"] = self.existing_index
+        assert not manifest.update_ldraw_index(self.existing_index)
+        assert not manifest.changed
+
+    def test_update_ldraw_empty_ingestion(self, manifest):
+        manifest.data["ingestion"] = {}
+        assert manifest.update_ldraw_index(self.existing_index)
+        assert manifest.changed
+        assert manifest.data["ingestion"]["ldraw"]["index"] == self.existing_index
+
+    def test_update_ldraw_empty_ldraw(self, manifest):
+        manifest.data["ingestion"]["ldraw"] = {}
+        assert manifest.update_ldraw_index(self.existing_index)
+        assert manifest.changed
+        assert manifest.data["ingestion"]["ldraw"]["index"] == self.existing_index

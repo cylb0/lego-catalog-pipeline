@@ -81,24 +81,27 @@ lego-catalog-pipeline/
 ├── src/
 │   ├── __init__.py
 │   ├── core/
-│   │   ├── catalog_manifest.py # Manifest management
-│   │   ├── logger.py           # Logger configuration
-│   │   ├── config.py           # Configuration management
-│   │   ├── file_utils.py       # File utility functions
-│   │   └── network_utils.py    # Network utility functions
-│   │   └── pipeline.py         # Pipeline logic
+│   │   ├── utils/
+│   │   │   ├── file_utils.py             # File utility functions
+│   │   │   └── network_utils.py          # Network utility functions
+│   │   ├── catalog_manifest.py           # Manifest management
+│   │   ├── logger.py                     # Logger configuration
+│   │   ├── config.py                     # Configuration management
+│   │   └── pipeline.py                   # Pipeline logic
+│   └── conversion/
+│   │   └── ldraw_to_gltf_converter.py    # LDraw to GLTF conversion logic
 │   ├── ingestion/
-│   │   ├── csv_downloader.py   # CSV downloading logic
-│   │   └── ldraw_downloader.py # LDraw library management
+│   │   ├── csv_downloader.py             # CSV downloading logic
+│   │   └── ldraw_downloader.py           # LDraw library management
 │   └── storage/
-│   │   └── s3_manager.py       # S3 interaction logic
-├── tests/                      # Unit testing suite
-├── logs/                       # Application logs
-├── main.py                     # Pipeline entry point
-├── pytest.ini                  # Pytest configuration
-├── requirements.txt            # Project dependencies
-├── .env                        # Environment variables (not version controlled)
-└── README.md                   # Project documentation
+│   │   └── s3_manager.py                 # S3 interaction logic
+├── tests/                                # Unit testing suite
+├── logs/                                 # Application logs
+├── main.py                               # Pipeline entry point
+├── pytest.ini                            # Pytest configuration
+├── requirements.txt                      # Project dependencies
+├── .env                                  # Environment variables (not version controlled)
+└── README.md                             # Project documentation
 ```
 
 ## Testing
