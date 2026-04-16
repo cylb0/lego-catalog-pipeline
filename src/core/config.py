@@ -15,6 +15,9 @@ class Config:
 
     def _init_env(self):
         self.S3_BUCKET: str = self._get_required_env("S3_BUCKET_NAME")
+        self.SQS_QUEUE_URL: str = self._get_required_env("SQS_QUEUE_URL")
+        self.AWS_DEFAULT_REGION: str = self._get_required_env("AWS_DEFAULT_REGION")
+
         self.MANIFEST_PATH: str = os.getenv("MANIFEST_PATH", "manifest.json")
         self.TMP_DIR: str = os.getenv("TMP_DIR", "tmp")
 
