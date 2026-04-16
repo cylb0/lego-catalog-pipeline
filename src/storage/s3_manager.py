@@ -256,6 +256,9 @@ class S3CatalogManager:
             return set()
 
     def _get_available_part_ids_ldraw(self) -> set[str]:
+        """
+        Returns a precomputed set of part IDs from the LDraw index in the manifest
+        """
         available_ids = self.manifest.data.get("ldraw_index", {})
 
         if not available_ids:
@@ -276,8 +279,7 @@ class S3CatalogManager:
         logger.info("Getting part IDs to convert")
         csv_state = self._get_part_ids_from_csv()
         glb_state = self._get_existing_glbs_list()
-        ldraw_state = self._get_available_part_ids_ldraw()
-
+        ldraw_state = self.manifest.get_ldraw_index()
         missing_ids = csv_state - glb_state
         to_convert_state = missing_ids.intersection(ldraw_state)
 
@@ -290,22 +292,24 @@ class S3CatalogManager:
             "to_convert_state": to_convert_state,
         }
 
-    def _get_orphan_ids(self, csv_ids: set[str]):
-        existing_ids = self._get_existing_glbs_list()
-        return existing_ids - csv_ids
-
-    def cleanup_orphan_glbs(self, csv_ids: set[str]):
+    def cleanup_orphan_glbs(self, orphan_glbs: set[str]):
         """
         Remove GLBs that are no longer present in the CSV
         """
-        orphan_ids = self._get_orphan_ids(csv_ids)
 
-        if not orphan_ids:
+        if not orphan_glbs:
             logger.info("No orphan GLBs found. Skipping cleanup")
             return
 
-        for id in orphan_ids:
-            key = f"glbs/{id}.glb"
-            self.remove_from_s3(key)
+        logger.info(f"Cleaning up {len(orphan_glbs)} orphan GLBs")
 
-        logger.info(f"Removed {len(orphan_ids)} orphan GLBs")
+        for id in orphan_glbs:
+            key = f"glbs/{id}.glb"
+            try:
+                self.remove_from_s3(key)
+            except ClientError as e:
+                logger.error(f"S3 error removing file: {e}")
+            except Exception as e:
+                logger.error(f"Error removing file: {e}")
+
+        logger.info(f"Removed {len(orphan_glbs)} orphan GLBs")

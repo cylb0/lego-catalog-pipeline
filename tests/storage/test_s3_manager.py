@@ -436,40 +436,8 @@ class TestSyncStateLogic:
     def test_get_sync_state_success(self, manager):
         manager._get_part_ids_from_csv = MagicMock(return_value={"a", "b", "c"})
         manager._get_existing_glbs_list = MagicMock(return_value={"a"})
-        manager._get_available_part_ids_ldraw = MagicMock(return_value={"a", "b"})
+        manager.manifest.get_ldraw_index = MagicMock(return_value={"a", "b"})
 
         state = manager.get_sync_state()
 
         assert state["to_convert_state"] == {"b"}
-
-    def test_get_orphan_ids_no_orphans(self, manager):
-        csv_ids = {"a", "b", "c"}
-        manager._get_existing_glbs_list = MagicMock(return_value={"a", "b", "c"})
-
-        result = manager._get_orphan_ids(csv_ids)
-
-        assert result == set()
-
-    def test_get_orphan_ids_orphan_found(self, manager):
-        csv_ids = {"a", "b"}
-        manager._get_existing_glbs_list = MagicMock(return_value={"a", "b", "c"})
-
-        result = manager._get_orphan_ids(csv_ids)
-
-        assert result == {"c"}
-
-    def test_get_orphan_ids_fresh_bucket(self, manager):
-        csv_ids = {"a", "b", "c"}
-        manager._get_existing_glbs_list = MagicMock(return_value=set())
-
-        result = manager._get_orphan_ids(csv_ids)
-
-        assert result == set()
-
-    def test_get_orphan_ids_empty_catalog(self, manager):
-        csv_ids = set()
-        manager._get_existing_glbs_list = MagicMock(return_value={"a", "b", "c"})
-
-        result = manager._get_orphan_ids(csv_ids)
-
-        assert result == {"a", "b", "c"}

@@ -4,6 +4,8 @@ from src.ingestion import CSVDownloader
 from src.ingestion import LdrawDownloader
 import logging
 import json
+from src.messaging import SQSHandler
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +24,24 @@ class CatalogPipeline:
         self.ldraw_downloader = LdrawDownloader(
             self.config.LDRAW_URL, self.config.TMP_DIR
         )
+        self.sqs_handler = SQSHandler(self.config.SQS_QUEUE_URL)
 
     def run(self):
         logger.info("Starting catalog pipeline run")
 
+        self.prepare_csvs()
+        self.prepare_ldraw()
+
+        self.s3_manager.upload_manifest()
+
+        sync_state = self.s3_manager.get_sync_state()
+
+        self._reconcile(sync_state)
+
+    def prepare_csvs(self):
+        """
+        Downloads CSVs and syncs them to S3 if they have changed.
+        """
         downloads = self.csv_downloader.fetch_data()
         for resource, data in downloads.items():
             if self.s3_manager.check_for_resource_changes(resource, data["hash"]):
@@ -34,24 +50,15 @@ class CatalogPipeline:
             else:
                 logger.info(f"No change detected for {resource}")
 
+    def prepare_ldraw(self):
+        """
+        Downloads LDraw library and syncs it to S3 if it has changed.
+        """
         latest_ldraw_date = self.ldraw_downloader.get_latest_version_date()
         if self.s3_manager.check_for_ldraw_changes(latest_ldraw_date):
             logger.info("New LDraw library detected, downloading and uploading to S3")
             local_ldraw = self.ldraw_downloader.fetch_library()
             self._sync_ldraw(local_ldraw, latest_ldraw_date)
-
-        logger.info(
-            "Manifest before upload: \n%s",
-            json.dumps(self.s3_manager.manifest.data, indent=4),
-        )
-        self.s3_manager.upload_manifest()
-
-        sync_state = self.s3_manager.get_sync_state()
-
-        self.s3_manager.cleanup_orphan_glbs(sync_state["csv_state"])
-
-        if sync_state["to_convert_state"]:
-            self._convert_parts(sync_state["to_convert_state"])
 
     def _sync_resource(self, resource: str, data: dict):
         """
@@ -73,6 +80,7 @@ class CatalogPipeline:
         """
         logger.info("Creating LDraw index...")
         available_ids = self.ldraw_downloader.create_index(local_ldraw)
+        print("AVAILABLE IDS  FROM CREATEINDEX", available_ids)
         self.s3_manager.update_manifest_ldraw_index(available_ids)
 
         logger.info("Uploading LDraw library to S3")
@@ -82,4 +90,33 @@ class CatalogPipeline:
             logger.info("LDraw library synced successfully")
 
     def _convert_parts(self, part_ids: set[str]):
-        pass
+        """
+        Sends part conversion jobs to SQS.
+        """
+        logger.info(f"Sending {len(part_ids)} part conversion jobs to SQS")
+        for part_id in part_ids:
+            try:
+                self.sqs_handler.send_message("part_id", str(part_id))
+            except ClientError as e:
+                logger.error(f"S3 error removing file: {e}")
+            except Exception as e:
+                logger.error(f"Error removing file: {e}")
+        logger.info("Part conversion jobs sent successfully")
+
+    def _reconcile(self, sync_state: dict):
+        """
+        Reconciles the sync state.
+        - Deduce orphan glbs (glbs that no longer exist in the csvs)
+        - Send part conversion jobs to SQS for new parts.
+        """
+        orphan_glbs = sync_state["glb_state"] - sync_state["csv_state"]
+        self.cleanup_orphan_glbs(orphan_glbs)
+
+        if sync_state["to_convert_state"]:
+            self._convert_parts(sync_state["to_convert_state"])
+
+    def cleanup_orphan_glbs(self, orphan_glbs: set[str]):
+        """
+        Cleans up orphan glbs.
+        """
+        self.s3_manager.cleanup_orphan_glbs(orphan_glbs)

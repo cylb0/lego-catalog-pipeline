@@ -9,6 +9,7 @@ A Python-based pipeline to synchronize LEGO catalog data from Rebrickable to AWS
 - **Change Detection**: Compares file hashes to avoid unnecessary uploads.
 - **Manifest Management**: Maintains a `manifest.json` in S3 to track file versions.
 - **Error Handling**: Robust error handling for network and file operations.
+- **SQS Integration**: Sends messages to an SQS queue for further processing.
 
 ## Prerequisites
 
@@ -43,10 +44,9 @@ Create a `.env` file in the root directory with the following variables:
 MANIFEST_PATH=manifest.json
 TMP_DIR=tmp
 
-AWS_ACCESS_KEY_ID=your-aws-access-key-id
-AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
 AWS_DEFAULT_REGION=your-aws-default-region
 S3_BUCKET_NAME=your-s3-bucket-name
+SQS_QUEUE_URL=your-sqs-queue-url
 
 REBRICKABLE_PARTS_CSV_URL=https://cdn.rebrickable.com/media/downloads/parts.csv.gz
 REBRICKABLE_CATEGORIES_CSV_URL=https://cdn.rebrickable.com/media/downloads/categories.csv.gz
@@ -93,6 +93,8 @@ lego-catalog-pipeline/
 │   ├── ingestion/
 │   │   ├── csv_downloader.py             # CSV downloading logic
 │   │   └── ldraw_downloader.py           # LDraw library management
+│   ├── messaging/
+│   │   └── sqs_handler.py                # SQS interaction logic
 │   └── storage/
 │   │   └── s3_manager.py                 # S3 interaction logic
 ├── tests/                                # Unit testing suite
