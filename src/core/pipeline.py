@@ -3,7 +3,6 @@ from src.storage import S3CatalogManager
 from src.ingestion import CSVDownloader
 from src.ingestion import LdrawDownloader
 import logging
-import json
 from src.messaging import SQSHandler
 from botocore.exceptions import ClientError
 
