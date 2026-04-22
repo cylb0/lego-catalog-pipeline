@@ -10,11 +10,11 @@ class S3Client:
         self.bucket = bucket
 
     def download_file(self, key: str, local_path: str):
-        logger.info(f"[S3] Downloading s3://{self.bucket}/{key} -> {local_path}")
+        logger.info(f"Downloading s3://{self.bucket}/{key} -> {local_path}")
         self.client.download_file(self.bucket, key, local_path)
-        logger.info(f"[S3] Downloaded s3://{self.bucket}/{key} -> {local_path}")
+        logger.info(f"Downloaded s3://{self.bucket}/{key} -> {local_path}")
 
     def upload_file(self, local_path: str, key: str):
-        logger.info(f"[S3] Uploading s3://{self.bucket}/{key} <- {local_path}")
+        logger.info(f"Uploading s3://{self.bucket}/{key} <- {local_path}")
         self.client.upload_file(local_path, self.bucket, key)
-        logger.info(f"[S3] Uploaded s3://{self.bucket}/{key} <- {local_path}")
+        logger.info(f"Uploaded s3://{self.bucket}/{key} <- {local_path}")

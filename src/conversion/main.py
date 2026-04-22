@@ -5,17 +5,18 @@ import os
 from src.messaging.sqs_handler import SQSHandler
 from src.conversion.s3_client import S3Client
 from src.conversion.worker import poll_and_process, prepare_ldraw
+from src.core.logger import setup_logging
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 logger = logging.getLogger(__name__)
 
 
 def run():
     dotenv.load_dotenv()
 
-    logger.info("[CONVERSION] Conversion worker starting")
+    cw_group = os.getenv("CLOUDWATCH_LOG_GROUP")
+    setup_logging(cloud_group=cw_group)
+
+    logger.info("Conversion worker starting")
 
     sqs = SQSHandler(os.getenv("SQS_QUEUE_URL"))
     s3 = S3Client(os.getenv("S3_BUCKET_NAME"))
@@ -28,12 +29,12 @@ def run():
     ldraw_dir = prepare_ldraw(s3, "ldraw.zip", zip_path, extract_path)
 
     if not ldraw_dir:
-        logger.error("[CONVERSION] Failed to download ldraw archive. Aborting.")
+        logger.error("Failed to download ldraw archive. Aborting.")
         return
 
     poll_and_process(sqs, s3, ldraw_dir, output_path, max_empty_polls)
 
-    logger.info("[CONVERSION] Conversion run complete")
+    logger.info("Conversion run complete")
 
 
 if __name__ == "__main__":
