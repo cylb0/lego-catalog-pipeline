@@ -10,6 +10,7 @@ A Python-based pipeline to synchronize LEGO catalog data from Rebrickable to AWS
 - **Manifest Management**: Maintains a `manifest.json` in S3 to track file versions.
 - **Error Handling**: Robust error handling for network and file operations.
 - **SQS Integration**: Sends messages to an SQS queue for further processing.
+- **LDraw to GLTF Conversion**: Converts LDraw parts to GLTF format.
 
 ## Prerequisites
 
