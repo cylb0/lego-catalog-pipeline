@@ -73,6 +73,9 @@ python main.py
 3. **Compare**: Calculates the hash of the downloaded files and compares them with the manifest.
 4. **Upload**: Uploads only the changed files to S3.
 5. **Update**: Updates the manifest in S3 with the new file hashes and names.
+6. **Download**: Downloads the latest LDraw parts library from LDraw.org to a temporary directory.
+7. **Update**: Updates the manifest in S3 with and index of available LDraw parts.
+8. **SQS Integration**: Sends messages to an SQS queue to trigger the LDraw to GLTF conversion pipeline for new parts.
 
 ## Project Structure
 
@@ -88,8 +91,13 @@ lego-catalog-pipeline/
 │   │   ├── logger.py                     # Logger configuration
 │   │   ├── config.py                     # Configuration management
 │   │   └── pipeline.py                   # Pipeline logic
-│   └── conversion/
-│   │   └── ldraw_to_gltf_converter.py    # LDraw to GLTF conversion logic
+│   ├── conversion/
+│   │   ├── main.py                       # Main entry point for the conversion pipeline
+│   │   ├── worker.py                     # Worker that polls SQS and processes messages
+│   │   ├── converter.py                  # Converts LDraw parts to GLTF
+│   │   ├── ldraw_unpacker.py             # Extracts LDraw parts library
+│   │   ├── s3_client.py                  # S3 interaction logic for conversion
+│   │   └── Dockerfile                    # Dockerfile for the conversion pipeline
 │   ├── ingestion/
 │   │   ├── csv_downloader.py             # CSV downloading logic
 │   │   └── ldraw_downloader.py           # LDraw library management
