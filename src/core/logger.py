@@ -39,19 +39,3 @@ def setup_logging(
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(formatter)
     root_logger.addHandler(stream_handler)
-
-    # config_params = {
-    #     "level": level,
-    #     "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    # }
-
-    # if filename:
-    #     log_dir = os.path.dirname(filename)
-    #     if log_dir:
-    #         os.makedirs(log_dir, exist_ok=True)
-    #     config_params["filename"] = filename
-    #     config_params["filemode"] = "a"
-    # else:
-    #     config_params["stream"] = sys.stdout
-
-    # logging.basicConfig(**config_params)

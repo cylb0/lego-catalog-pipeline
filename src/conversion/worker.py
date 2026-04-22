@@ -30,7 +30,7 @@ def process_messages(
     ldraw_dir: str,
     output_path: str,
 ):
-    logger.info(f"[CONVERSION] Processing {len(messages)} messages")
+    logger.info(f"Processing {len(messages)} messages")
 
     for message in messages:
         body = json.loads(message["Body"])
@@ -41,9 +41,9 @@ def process_messages(
                 s3.upload_file(f"{output_path}/{part_id}.glb", f"glbs/{part_id}.glb")
                 sqs.delete_message(message["ReceiptHandle"])
             except Exception as e:
-                logger.error(f"[CONVERSION] Failed to upload part {part_id}: {e}")
+                logger.error(f"Failed to upload part {part_id}: {e}")
         else:
-            logger.warning(f"[CONVERSION] Conversion failed for part {part_id}")
+            logger.warning(f"Conversion failed for part {part_id}")
 
 
 def poll_and_process(
@@ -54,21 +54,19 @@ def poll_and_process(
     max_empty_polls: int,
 ):
     empty_polls = 0
-    logger.info("[CONVERSION] Starting polling loop")
+    logger.info("Starting polling loop")
 
     while empty_polls < max_empty_polls:
         messages = sqs.receive_messages()
 
         if not messages:
             empty_polls += 1
-            logger.info(
-                f"[CONVERSION] No messages (empty poll {empty_polls}/{max_empty_polls})"
-            )
+            logger.info(f"No messages (empty poll {empty_polls}/{max_empty_polls})")
             continue
 
         empty_polls = 0
 
-        logger.info(f"[CONVERSION] Processing {len(messages)} messages")
+        logger.info(f"Processing {len(messages)} messages")
         process_messages(messages, sqs, s3, ldraw_dir, output_path)
 
-    logger.info("[CONVERSION] No messages for a while -> stopping worker")
+    logger.info("No messages for a while -> stopping worker")

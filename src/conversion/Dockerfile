@@ -31,7 +31,8 @@ RUN apt-get update && apt-get install -y \
 # --- PYTHON DEPENDENCIES ---
 RUN pip3 install --no-cache-dir \
     boto3 \
-    python-dotenv
+    python-dotenv \
+    watchtower
 
 # --- BLENDER DOWNLOAD AND INSTALL ---
 RUN wget https://download.blender.org/release/Blender3.6/blender-3.6.0-linux-x64.tar.xz \
@@ -48,6 +49,7 @@ RUN wget https://github.com/TobyLobster/ImportLDraw/archive/refs/heads/master.zi
     mv /tmp/ImportLDraw-master $BLENDER_PATH/3.6/scripts/addons/io_scene_importldraw
 
 # --- COPY PIPELINE CODE ---
+COPY src/core/logger.py /app/src/core/logger.py
 COPY src/conversion /app/src/conversion
 COPY src/messaging /app/src/messaging
 

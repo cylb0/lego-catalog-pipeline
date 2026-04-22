@@ -19,9 +19,9 @@ def setup_argv():
     argv = sys.argv
     part_id, ldraw_dir, output_path = argv[argv.index("--") + 1 :]
 
-    logger.info(f"[Blender]: Part ID: {part_id}")
-    logger.info(f"[Blender]: LDraw dir: {ldraw_dir}")
-    logger.info(f"[Blender]: Output path: {output_path}")
+    logger.info(f"Part ID: {part_id}")
+    logger.info(f"LDraw dir: {ldraw_dir}")
+    logger.info(f"Output path: {output_path}")
 
     return part_id, ldraw_dir, output_path
 
@@ -42,32 +42,32 @@ def setup_blender(ldraw_dir):
     bpy.context.scene.world.use_nodes = True
 
     addon_utils.enable("io_scene_importldraw", default_set=True)
-    logger.info("[Blender]: ImportLDraw addon enabled")
+    logger.info("ImportLDraw addon enabled")
 
 
 def import_ldraw_model(part_id, ldraw_dir):
     input_file = os.path.join(ldraw_dir, "parts", f"{part_id}.dat")
 
     if not os.path.exists(input_file):
-        logger.error(f"[Blender]: missing file {input_file}")
+        logger.error(f"missing file {input_file}")
         sys.exit(1)
 
     try:
         bpy.ops.import_scene.importldraw(
             filepath=input_file, ldrawPath=ldraw_dir, addEnvironment=False
         )
-        logger.info("[Blender] Import successful")
+        logger.info("Import successful")
     except Exception as e:
-        logger.error(f"[Blender] Import failed: {e}")
+        logger.error(f"Import failed: {e}")
         sys.exit(1)
 
 
 def export_glb(output_file):
     try:
         bpy.ops.export_scene.gltf(filepath=output_file, export_format="GLB")
-        print(f"[Blender] Export successful to {output_file}")
+        print(f"Export successful to {output_file}")
     except Exception as e:
-        print(f"[Blender] Export failed: {e}")
+        print(f"Export failed: {e}")
         sys.exit(1)
 
 
