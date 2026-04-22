@@ -17,7 +17,7 @@ def extract_ldraw_zip(zip_path: str, extract_dir: str):
 
     logger.info("Extraction complete")
 
-    ldraw_root = os.path.join(extract_dir, "complete/ldraw")
+    ldraw_root = os.path.join(extract_dir, "ldraw")
 
     if not os.path.exists(ldraw_root):
         raise FileNotFoundError(f"Ldraw root not found at {ldraw_root}")

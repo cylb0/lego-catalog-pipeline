@@ -43,6 +43,7 @@ jobs:
           REBRICKABLE_COLORS_CSV_URL: ${{ secrets.REBRICKABLE_COLORS_CSV_URL }}
 
           LDRAW_COMPLETE_LIBRARY_URL: "http://localhost:8000/complete.zip"
+          LDRAW_COMPLETE_LIBRARY_WEBPAGE: ${{ secrets.LDRAW_COMPLETE_LIBRARY_WEBPAGE }}
 
           LOG_FILE: ${{ secrets.LOG_FILE }}
           CLOUDWATCH_LOG_GROUP: ${{ secrets.CLOUDWATCH_LOG_GROUP }}

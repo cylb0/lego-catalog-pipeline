@@ -72,12 +72,14 @@ def test_config_loads_correctly(monkeypatch):
         test_tmp_dir = "test-tmp"
         test_parts_url = "test-parts-url"
         test_categories_url = "test-categories-url"
+        test_colors_url = "test-colors-url"
 
         monkeypatch.setenv("S3_BUCKET_NAME", test_bucket)
         monkeypatch.setenv("MANIFEST_PATH", test_manifest_path)
         monkeypatch.setenv("TMP_DIR", test_tmp_dir)
         monkeypatch.setenv("REBRICKABLE_PARTS_CSV_URL", test_parts_url)
         monkeypatch.setenv("REBRICKABLE_CATEGORIES_CSV_URL", test_categories_url)
+        monkeypatch.setenv("REBRICKABLE_COLORS_CSV_URL", test_colors_url)
 
         Config._instance = None
         config = Config()
@@ -88,6 +90,7 @@ def test_config_loads_correctly(monkeypatch):
         assert config.RESOURCES == {
             "parts": test_parts_url,
             "categories": test_categories_url,
+            "colors": test_colors_url,
         }
 
     finally:

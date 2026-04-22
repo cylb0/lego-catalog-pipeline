@@ -21,7 +21,7 @@ class CatalogPipeline:
         )
         self.csv_downloader = CSVDownloader(self.config.RESOURCES, self.config.TMP_DIR)
         self.ldraw_downloader = LdrawDownloader(
-            self.config.LDRAW_URL, self.config.TMP_DIR
+            self.config.LDRAW_WEBPAGE, self.config.LDRAW_URL, self.config.TMP_DIR
         )
         self.sqs_handler = SQSHandler(self.config.SQS_QUEUE_URL)
 
@@ -79,7 +79,6 @@ class CatalogPipeline:
         """
         logger.info("Creating LDraw index...")
         available_ids = self.ldraw_downloader.create_index(local_ldraw)
-        print("AVAILABLE IDS  FROM CREATEINDEX", available_ids)
         self.s3_manager.update_manifest_ldraw_index(available_ids)
 
         logger.info("Uploading LDraw library to S3")
