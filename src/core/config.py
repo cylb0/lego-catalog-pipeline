@@ -24,8 +24,10 @@ class Config:
         self.RESOURCES: dict[str, str] = {
             "parts": self._get_required_env("REBRICKABLE_PARTS_CSV_URL"),
             "categories": self._get_required_env("REBRICKABLE_CATEGORIES_CSV_URL"),
+            "colors": self._get_required_env("REBRICKABLE_COLORS_CSV_URL"),
         }
 
+        self.LDRAW_WEBPAGE = self._get_required_env("LDRAW_COMPLETE_LIBRARY_WEBPAGE")
         self.LDRAW_URL = self._get_required_env("LDRAW_COMPLETE_LIBRARY_URL")
         self.LOG_FILE = os.getenv("LOG_FILE", "logs/catalog_pipeline.log")
         self.CLOUDWATCH_LOG_GROUP = self._get_required_env("CLOUDWATCH_LOG_GROUP")

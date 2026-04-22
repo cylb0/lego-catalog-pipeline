@@ -18,11 +18,6 @@ def setup_logging():
 def setup_argv():
     argv = sys.argv
     part_id, ldraw_dir, output_path = argv[argv.index("--") + 1 :]
-
-    logger.info(f"Part ID: {part_id}")
-    logger.info(f"LDraw dir: {ldraw_dir}")
-    logger.info(f"Output path: {output_path}")
-
     return part_id, ldraw_dir, output_path
 
 
@@ -65,9 +60,9 @@ def import_ldraw_model(part_id, ldraw_dir):
 def export_glb(output_file):
     try:
         bpy.ops.export_scene.gltf(filepath=output_file, export_format="GLB")
-        print(f"Export successful to {output_file}")
+        logger.info(f"Export successful to {output_file}")
     except Exception as e:
-        print(f"Export failed: {e}")
+        logger.error(f"Export failed: {e}")
         sys.exit(1)
 
 

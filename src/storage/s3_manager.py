@@ -283,9 +283,6 @@ class S3CatalogManager:
         missing_ids = csv_state - glb_state
         to_convert_state = missing_ids.intersection(ldraw_state)
 
-        logger.info(
-            f"{len(to_convert_state)} parts ready for conversion: {to_convert_state}"
-        )
         return {
             "csv_state": csv_state,
             "glb_state": glb_state,

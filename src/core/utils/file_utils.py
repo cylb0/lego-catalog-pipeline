@@ -3,6 +3,9 @@ from contextlib import contextmanager
 import shutil
 from datetime import datetime
 import hashlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def join_path(path: str, filename: str) -> str:
@@ -85,7 +88,7 @@ def tmp_local_dir(tmp_dir: str, cleanup: bool = True):
             if os.path.exists(tmp_dir):
                 shutil.rmtree(tmp_dir)
         else:
-            print(f"Skipping {os.path.abspath(tmp_dir)} cleanup")
+            logger.info(f"Skipping {os.path.abspath(tmp_dir)} cleanup")
 
 
 def return_timestamp() -> str:

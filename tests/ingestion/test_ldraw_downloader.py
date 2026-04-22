@@ -6,42 +6,56 @@ import pytest
 
 @pytest.fixture
 def manager():
-    url = "http://localhost:8000"
+    webpage_url = "http://localhost:8000"
+    library_url = "http://localhost:8000"
     tmp_dir = "tmp"
-    return LdrawDownloader(url, tmp_dir)
+    return LdrawDownloader(webpage_url, library_url, tmp_dir)
 
 
 class TestGetLatestVersionDate:
     @patch("src.ingestion.ldraw_downloader.urlopen")
     def test_get_latest_version_date(self, mock_urlopen, manager):
+        fake_html = """
+        <html>
+            <body>
+                LDraw.org Parts Update 2026-03
+            </body>
+        </html>
+        """
         mock_response = MagicMock()
-        mock_response.headers = {"Last-Modified": "Fri, 10 Apr 2026 12:06:19 GMT"}
+        mock_response.read.return_value = fake_html.encode("utf-8")
         mock_response.__enter__.return_value = mock_response
         mock_urlopen.return_value = mock_response
 
         result = manager.get_latest_version_date()
 
-        assert result == "Fri, 10 Apr 2026 12:06:19 GMT"
+        assert result == "2026-03"
+
         mock_urlopen.assert_called_once()
         actual_request = mock_urlopen.call_args[0][0]
 
         assert isinstance(actual_request, Request)
-        assert actual_request.full_url == manager.library_url
-        assert actual_request.get_method() == "HEAD"
+        assert actual_request.full_url == manager.webpage_url
 
     @patch("src.ingestion.ldraw_downloader.urlopen")
-    def test_get_latest_version_date_missing_header(
+    def test_get_latest_version_date_missing_pattern(
         self, mock_urlopen, manager, caplog
     ):
+        fake_html = """
+        <html>
+            <body>
+                No LDraw updated here
+            </body>
+        </html>
+        """
         mock_response = MagicMock()
-        mock_response.headers = {}
+        mock_response.read.return_value = fake_html.encode("utf-8")
         mock_response.__enter__.return_value = mock_response
         mock_urlopen.return_value = mock_response
 
         result = manager.get_latest_version_date()
 
         assert result is None
-        assert "Unexpected error for get_latest_version_date" in caplog.text
 
 
 def test_create_index_logic_complete(manager):
@@ -60,6 +74,5 @@ def test_create_index_logic_complete(manager):
         ]
 
         result = manager.create_index("test.zip")
-        print("result", result)
 
         assert result == {"3007"}
