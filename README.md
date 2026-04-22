@@ -92,8 +92,12 @@ lego-catalog-pipeline/
 │   │   ├── config.py                     # Configuration management
 │   │   └── pipeline.py                   # Pipeline logic
 │   ├── conversion/
-│   │   ├── conversion_orchestrator.py    # LDraw to GLTF conversion orchestrator
-│   │   └── blender_script.py             # Blender inner script for LDraw to GLTF conversion
+│   │   ├── main.py                       # Main entry point for the conversion pipeline
+│   │   ├── worker.py                     # Worker that polls SQS and processes messages
+│   │   ├── converter.py                  # Converts LDraw parts to GLTF
+│   │   ├── ldraw_unpacker.py             # Extracts LDraw parts library
+│   │   ├── s3_client.py                  # S3 interaction logic for conversion
+│   │   └── Dockerfile                    # Dockerfile for the conversion pipeline
 │   ├── ingestion/
 │   │   ├── csv_downloader.py             # CSV downloading logic
 │   │   └── ldraw_downloader.py           # LDraw library management
